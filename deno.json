@@ -1,0 +1,19 @@
+{
+  "name": "@hypercall/sdk",
+  "version": "0.0.0",
+  "license": "MIT",
+  "exports": {
+    ".": "./src/mod.ts",
+    "./api/info": "./src/api/info/mod.ts"
+  },
+  "imports": {
+    "@valibot/valibot": "jsr:@valibot/valibot@^1.4.1"
+  },
+  "tasks": {
+    "check": "deno fmt --check && deno lint && deno check --doc"
+  },
+  "fmt": {
+    "lineWidth": 120
+  },
+  "lock": false
+}
