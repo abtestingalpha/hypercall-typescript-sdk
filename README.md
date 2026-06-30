@@ -1,6 +1,397 @@
 # Hypercall TypeScript SDK
 
-TypeScript SDK scaffold for Hypercall API consumers.
+A TypeScript SDK for Hypercall API consumers, patterned after the current
+[`@nktkas/hyperliquid`](https://github.com/nktkas/hyperliquid) source layout.
+
+The package exposes:
+
+- **Transport:** `HttpTransport`
+- **Client:** `InfoClient`
+- **Low-level methods:** `@hypercall/sdk/api/info`
+- **Types:** request, response, and domain types for the exported Info API methods
+
+## Installation
+
+```bash
+pnpm add @hypercall/sdk
+```
+
+For local usage before the package is published:
+
+```bash
+cd /Users/abtestingalpha/Desktop/hypertheta/frontend
+pnpm add @hypercall/sdk@link:/Users/abtestingalpha/Desktop/hypercall-typescript-sdk
+```
+
+
+## Quick Start
+
+```ts
+import { HttpTransport, InfoClient } from '@hypercall/sdk'
+
+const transport = new HttpTransport({ apiUrl: 'https://api.hypercall.xyz' })
+const info = new InfoClient({ transport })
+
+const markets = await info.markets({ include_instruments: false })
+
+console.log(markets.data[0]?.underlying)
+```
+
+`HttpTransport` defaults to `https://api.hypercall.xyz`. Apps that target a
+specific deploy should pass `apiUrl` from their own config.
+
+```ts
+const transport = new HttpTransport({ apiUrl: 'https://api.hypercall.xyz' })
+```
+
+## Info API Examples
+
+The Info client follows the same call shape as `@nktkas/hyperliquid`: request
+params come first, and the optional `AbortSignal` comes last.
+
+Focused runnable examples live in `examples/`:
+
+- `read-markets.ts`
+- `read-wallet.ts`
+- `withdrawal-status.ts`
+- `rfq-status.ts`
+- `historical-theos.ts`
+- `liquidations.ts`
+
+```ts
+import { HttpTransport, InfoClient } from '@hypercall/sdk'
+
+const transport = new HttpTransport({ apiUrl: 'https://api.hypercall.xyz' })
+const info = new InfoClient({ transport })
+
+const controller = new AbortController()
+
+const summaries = await info.optionSummaries(
+  { currency: 'SPCX' },
+  controller.signal,
+)
+
+console.log(summaries.result?.[0]?.instrument_name)
+```
+
+### Exchange Metadata
+
+```ts
+const exchange = await info.exchangeInfo()
+
+console.log(exchange.exchange_address)
+console.log(exchange.chain_id)
+console.log(exchange.signing_domain.name)
+```
+
+### Markets
+
+```ts
+const slimMarkets = await info.markets({ include_instruments: false })
+const fullMarkets = await info.markets()
+
+console.log(slimMarkets.data[0]?.underlying)
+console.log(fullMarkets.data[0]?.instruments[0]?.id)
+```
+
+### Instruments
+
+```ts
+const instruments = await info.instruments({ currency: 'SPCX' })
+
+console.log(instruments.result?.[0]?.instrument_id)
+console.log(instruments.result?.[0]?.instrument_name)
+```
+
+### Option Summaries
+
+```ts
+const summaries = await info.optionSummaries({ currency: 'SPCX' })
+
+console.log(summaries.result?.[0]?.mark_price)
+console.log(summaries.result?.[0]?.greeks?.delta)
+```
+
+### Orderbook
+
+```ts
+const instruments = await info.instruments({ currency: 'SPCX' })
+const instrument = instruments.result?.[0]
+
+if (instrument) {
+  const book = await info.orderbook({
+    instrumentId: instrument.instrument_id,
+    depth: 15,
+  })
+
+  console.log(book.result?.bids[0])
+  console.log(book.result?.asks[0])
+}
+```
+
+### Portfolio
+
+```ts
+const portfolio = await info.portfolio({
+  wallet: '0xe55b5e5e38f73c30aa367d310d6247f3f9a5e86e',
+})
+
+console.log(portfolio.data?.available_balance)
+console.log(portfolio.data?.positions[0]?.symbol)
+```
+
+### Orders
+
+```ts
+const orders = await info.orders({
+  wallet: '0xe55b5e5e38f73c30aa367d310d6247f3f9a5e86e',
+  limit: 25,
+})
+
+console.log(orders.data[0]?.order_id)
+console.log(orders.pagination.count)
+```
+
+### Fills
+
+```ts
+const fills = await info.fills({
+  wallet: '0xe55b5e5e38f73c30aa367d310d6247f3f9a5e86e',
+  limit: 25,
+})
+
+console.log(fills.data[0]?.fill_id)
+console.log(fills.data[0]?.side)
+```
+
+### Settlement Payouts and Authorized Agents
+
+```ts
+const payouts = await info.settlementPayouts({
+  wallet: '0xe55b5e5e38f73c30aa367d310d6247f3f9a5e86e',
+  limit: 25,
+})
+
+console.log(payouts.data[0]?.symbol)
+console.log(payouts.pagination.count)
+
+const agents = await info.authorizedAgents({
+  wallet: '0xe55b5e5e38f73c30aa367d310d6247f3f9a5e86e',
+})
+
+console.log(agents.agents[0])
+```
+
+### Historical Theos
+
+```ts
+const history = await info.historicalTheos({
+  instrumentName: 'SPCX-20261231-10-C',
+  interval: '1h',
+  limit: 48,
+})
+
+console.log(history.data?.points[0]?.theoretical_price)
+
+const batch = await info.historicalTheosBatch({
+  instrumentNames: ['SPCX-20261231-10-C', 'SPCX-20261231-12-C'],
+  interval: '1h',
+  limit: 48,
+})
+
+console.log(batch.data?.['SPCX-20261231-10-C']?.points.length)
+```
+
+### Historical PnL
+
+```ts
+const pnl = await info.historicalPnl({
+  wallet: '0xe55b5e5e38f73c30aa367d310d6247f3f9a5e86e',
+  interval: '1h',
+  limit: 24,
+})
+
+console.log(pnl.data?.points[0]?.equity)
+console.log(pnl.data?.points[0]?.net_deposits)
+```
+
+### Withdrawal Status
+
+```ts
+const withdrawals = await info.withdrawalHistory({
+  wallet: '0xe55b5e5e38f73c30aa367d310d6247f3f9a5e86e',
+  limit: 5,
+})
+
+const latest = withdrawals.withdrawals[0]
+
+if (latest) {
+  const status = await info.directiveStatus({
+    directiveId: latest.directive_id,
+  })
+
+  console.log(status.delivery_status)
+  console.log(status.tx_hash)
+}
+```
+
+### RFQ Status
+
+```ts
+const rfq = await info.rfqStatus({
+  rfqId: '00000000-0000-0000-0000-000000000000',
+})
+
+console.log(rfq.status)
+console.log(rfq.quotes[0]?.quote_id)
+```
+
+### Liquidations
+
+```ts
+const status = await info.liquidationStatus({
+  wallet: '0xe55b5e5e38f73c30aa367d310d6247f3f9a5e86e',
+})
+
+console.log(status.data?.state)
+console.log(status.data?.shortfall)
+
+const history = await info.liquidationHistory({
+  wallet: '0xe55b5e5e38f73c30aa367d310d6247f3f9a5e86e',
+  limit: 20,
+  offset: 0,
+})
+
+console.log(history.data[0]?.new_state)
+
+const publicLiquidations = await info.liquidations({
+  limit: 50,
+  status: 'in_liquidation',
+  marginMode: 'standard',
+  liquidationMode: 'full',
+})
+
+console.log(publicLiquidations.data[0]?.auction_id)
+```
+
+## Low-Level Method Imports
+
+Low-level methods are available from `@hypercall/sdk/api/info` for direct,
+tree-shakeable access.
+
+```ts
+import { HttpTransport } from '@hypercall/sdk'
+import { markets } from '@hypercall/sdk/api/info'
+
+const transport = new HttpTransport({ apiUrl: 'https://api.hypercall.xyz' })
+
+const response = await markets(
+  { transport },
+  { include_instruments: false },
+)
+
+console.log(response.data[0]?.underlying)
+```
+
+## Response Envelopes
+
+Different Hypercall endpoints return different envelope shapes. Keep the
+envelope when typing app code instead of assuming every endpoint returns a raw
+array.
+
+- **REST list envelopes:** `markets`, `orders`, `fills`, `settlementPayouts`,
+  `liquidationHistory`, and `liquidations` return `{ success, data }`.
+  `orders`, `fills`, `settlementPayouts`, and `liquidationHistory` also include
+  `pagination`. `liquidations` includes cursor pagination in `page`.
+- **JSON-RPC envelopes:** `instruments`, `optionSummaries`, and `orderbook`
+  return `{ jsonrpc, result, error, testnet, usDiff, usIn, usOut }`.
+- **API success envelope:** `portfolio`, `historicalTheos`,
+  `historicalTheosBatch`, `historicalPnl`, and `liquidationStatus` return
+  `{ success, data, error }`.
+- **Authorized agents and withdrawals:** `authorizedAgents` returns `{ agents }`;
+  `withdrawalHistory` returns `{ withdrawals }`.
+- **Direct objects:** `exchangeInfo`, `directiveStatus`, and `rfqStatus` return
+  their response objects directly.
+
+Useful root-level types:
+
+```ts
+import type {
+  AuthorizedAgentsResponse,
+  ExchangeInfoResponse,
+  Fill,
+  FillsResponse,
+  HistoricalPnlData,
+  HistoricalPnlPoint,
+  HistoricalPnlResponse,
+  HistoricalTheoData,
+  HistoricalTheoInterval,
+  HistoricalTheoPoint,
+  HistoricalTheosBatchResponse,
+  HistoricalTheosResponse,
+  Instrument,
+  InstrumentsResponse,
+  DirectiveStatusResponse,
+  LiquidationHistoryEntry,
+  LiquidationHistoryResponse,
+  LiquidationStatusData,
+  LiquidationStatusResponse,
+  LiquidationsResponse,
+  Market,
+  MarketInstrument,
+  MarketSlim,
+  MarketsResponse,
+  MarketsSlimResponse,
+  OptionSummariesResponse,
+  OptionSummary,
+  Order,
+  OrderbookResponse,
+  OrderBook,
+  Portfolio,
+  PortfolioResponse,
+  RfqQuote,
+  RfqStatusResponse,
+  SettlementPayout,
+  SettlementPayoutsResponse,
+  WithdrawalHistoryResponse,
+} from '@hypercall/sdk'
+```
+
+## Endpoint Reference
+
+| Client method | Params | Response type |
+| --- | --- | --- |
+| `info.exchangeInfo()` | none | `ExchangeInfoResponse` |
+| `info.markets()` | `{ include_instruments?: true }` | `MarketsResponse` |
+| `info.markets({ include_instruments: false })` | `{ include_instruments: false }` | `MarketsSlimResponse` |
+| `info.instruments(params)` | `{ currency, kind? }` | `InstrumentsResponse` |
+| `info.optionSummaries(params)` | `{ currency, kind?, expiry? }` | `OptionSummariesResponse` |
+| `info.orderbook(params)` | `{ instrumentId, depth? }` | `OrderbookResponse` |
+| `info.portfolio(params)` | `{ wallet }` | `PortfolioResponse` |
+| `info.orders(params)` | `{ wallet, limit?, offset?, status? }` | `OrdersResponse` |
+| `info.fills(params)` | `{ wallet, limit?, offset? }` | `FillsResponse` |
+| `info.settlementPayouts(params)` | `{ wallet, limit?, offset?, symbol?, ledgerApplied? }` | `SettlementPayoutsResponse` |
+| `info.authorizedAgents(params)` | `{ wallet }` | `AuthorizedAgentsResponse` |
+| `info.directiveStatus(params)` | `{ directiveId }` | `DirectiveStatusResponse` |
+| `info.withdrawalHistory(params)` | `{ wallet, limit? }` | `WithdrawalHistoryResponse` |
+| `info.rfqStatus(params)` | `{ rfqId }` | `RfqStatusResponse` |
+| `info.historicalTheos(params)` | `{ instrumentName, interval, limit? }` | `HistoricalTheosResponse` |
+| `info.historicalTheosBatch(params)` | `{ instrumentNames, interval, limit? }` | `HistoricalTheosBatchResponse` |
+| `info.historicalPnl(params)` | `{ wallet, interval, limit?, includeAttribution? }` | `HistoricalPnlResponse` |
+| `info.liquidationStatus(params)` | `{ wallet }` | `LiquidationStatusResponse` |
+| `info.liquidationHistory(params)` | `{ wallet, limit?, offset? }` | `LiquidationHistoryResponse` |
+| `info.liquidations(params)` | `{ cursor?, limit?, wallet?, status?, state?, marginMode?, liquidationMode? }` | `LiquidationsResponse` |
+
+Hypercall API docs: https://docs.hypercall.xyz/docs/trading/over-api/
+
+## Local Development
+
+```bash
+corepack pnpm install
+corepack pnpm typecheck
+corepack pnpm test
+corepack pnpm dev
+```
 
 The source layout follows the current `@nktkas/hyperliquid` repository style:
 
@@ -9,40 +400,5 @@ The source layout follows the current `@nktkas/hyperliquid` repository style:
 - Domain clients live under `src/api/<domain>/client.ts`.
 - Low-level tree-shakeable methods live under `src/api/<domain>/_methods/`.
 
-For local Next.js dogfooding, `package.json` builds `dist/` with JavaScript imports rewritten from `.ts` to `.js`.
-
-## Local Development
-
-```bash
-corepack pnpm install
-corepack pnpm dev
-```
-
-From the frontend repo, link this package while developing:
-
-```bash
-cd /Users/abtestingalpha/Desktop/hypertheta/frontend
-pnpm add @hypercall/sdk@link:/Users/abtestingalpha/Desktop/hypercall-typescript-sdk
-```
-
-Then import it normally:
-
-```ts
-import { HttpTransport, InfoClient } from '@hypercall/sdk'
-
-const transport = new HttpTransport()
-const info = new InfoClient({ transport })
-const markets = await info.markets()
-```
-
-Low-level method imports:
-
-```ts
-import { HttpTransport } from '@hypercall/sdk'
-import { markets } from '@hypercall/sdk/api/info'
-
-const transport = new HttpTransport()
-const data = await markets({ transport })
-```
-
-Do not commit a frontend `link:` dependency. Switch the frontend to a GitHub commit or package version before a dogfood PR.
+For local Next.js usage, `package.json` builds `dist/` with JavaScript
+imports rewritten from `.ts` to `.js`.

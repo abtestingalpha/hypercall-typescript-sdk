@@ -1,0 +1,12 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "noEmit": true,
+    "paths": {
+      "@hypercall/sdk": ["./src/mod.ts"],
+      "@hypercall/sdk/api/info": ["./src/api/info/mod.ts"]
+    }
+  },
+  "include": ["examples/**/*.ts"]
+}

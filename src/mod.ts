@@ -22,7 +22,6 @@
  * @module
  */
 
-export { HypercallError } from './_base.ts'
-export { SchemaError } from './api/_base.ts'
+export { HypercallError, ValidationError } from './_base.ts'
 export * from './transport/mod.ts'
 export * from './api/info/client.ts'

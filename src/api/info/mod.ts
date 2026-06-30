@@ -9,11 +9,18 @@
 
 export type { InfoConfig } from './_methods/_base/mod.ts'
 
+export * from './_methods/authorizedAgents.ts'
+export * from './_methods/directives.ts'
 export * from './_methods/exchangeInfo.ts'
 export * from './_methods/fills.ts'
+export * from './_methods/historicalPnl.ts'
+export * from './_methods/historicalTheos.ts'
 export * from './_methods/instruments.ts'
+export * from './_methods/liquidations.ts'
 export * from './_methods/markets.ts'
 export * from './_methods/optionSummaries.ts'
 export * from './_methods/orderbook.ts'
 export * from './_methods/orders.ts'
 export * from './_methods/portfolio.ts'
+export * from './_methods/rfq.ts'
+export * from './_methods/settlementPayouts.ts'

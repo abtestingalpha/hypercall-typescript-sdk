@@ -1,149 +1,178 @@
 import { TransportError, type IRequestTransport } from '../_base.ts'
+import * as abort from '../_abort.ts'
 
-export type FetchLike = (
-  input: string | URL | Request,
-  init?: RequestInit,
-) => Promise<Response>
+/** Mainnet API URL. */
+export const MAINNET_API_URL = 'https://api.hypercall.xyz'
 
-export interface HttpTransportServerConfig {
-  api: string
-}
-
+/** Options for {@linkcode HttpTransport}. */
 export interface HttpTransportOptions {
-  isTestnet?: boolean
-  timeout?: number | false
-  server?: {
-    mainnet?: Partial<HttpTransportServerConfig>
-    testnet?: Partial<HttpTransportServerConfig>
-  }
-  fetch?: FetchLike
-  fetchOptions?: RequestInit
-  onRequest?: (request: Request) => Request | Promise<Request>
-  onResponse?: (response: Response) => Response | Promise<Response>
-  onError?: (error: unknown) => Error | Promise<Error>
+  /** Request timeout in milliseconds. Set to `null` to disable the timeout. */
+  timeout?: number | null
+  /** API base URL. Defaults to {@link MAINNET_API_URL}. */
+  apiUrl?: string | URL
+  /** Default fetch options applied to every request. `method` and `body` are controlled by the SDK. */
+  fetchOptions?: Omit<RequestInit, 'body' | 'method'>
 }
 
 /** Error thrown when an HTTP request fails. */
 export class HttpRequestError extends TransportError {
-  readonly response?: Response
-  readonly body?: string
+  /** Cloned HTTP response, when one was received. */
+  response?: Response
+  /** SDK request context that produced the error. */
+  request?: unknown
 
-  constructor(args?: { response?: Response; body?: string }, options?: ErrorOptions) {
-    const { response, body } = args ?? {}
+  constructor(options?: ErrorOptions & { detail?: string; response?: Response; request?: unknown }) {
+    const { detail, response, request, ...errorOptions } = options ?? {}
     let message: string
 
     if (response) {
       message = `${response.status} ${response.statusText}`.trim()
-      if (body) {
-        message += ` - ${body}`
+      if (detail) {
+        message += ` - ${detail}`
       }
+    } else if (detail) {
+      message = detail
     } else {
-      message = `Unknown error while making an HTTP request: ${options?.cause}`
+      const cause = errorOptions.cause
+      message = cause === undefined
+        ? 'Unknown HTTP request error'
+        : `Unknown HTTP request error: ${cause instanceof Error ? cause.message : String(cause)}`
     }
 
-    super(message, options)
+    super(message, errorOptions)
     this.name = 'HttpRequestError'
     this.response = response
-    this.body = body
+    this.request = request
   }
 }
 
-/** HTTP implementation of the REST transport interface. */
+/**
+ * HTTP implementation of the REST transport interface.
+ *
+ * @example
+ * ```ts
+ * import { HttpTransport } from "@hypercall/sdk";
+ *
+ * const transport = new HttpTransport({ apiUrl: "https://api.hypercall.xyz" });
+ * ```
+ */
 export class HttpTransport implements IRequestTransport {
-  readonly isTestnet: boolean
-  readonly timeout: number | false
-  readonly server: {
-    mainnet: HttpTransportServerConfig
-    testnet: HttpTransportServerConfig
-  }
-
-  private readonly fetchImpl: FetchLike
-  private readonly fetchOptions: RequestInit
-  private readonly onRequest?: HttpTransportOptions['onRequest']
-  private readonly onResponse?: HttpTransportOptions['onResponse']
-  private readonly onError?: HttpTransportOptions['onError']
+  /** Request timeout in milliseconds. `null` disables the timeout. */
+  timeout: number | null
+  /** API base URL used to resolve request paths. */
+  apiUrl: string | URL
+  /** Default fetch options applied to every request. */
+  fetchOptions: Omit<RequestInit, 'body' | 'method'>
 
   constructor(options: HttpTransportOptions = {}) {
-    this.isTestnet = options.isTestnet ?? false
     this.timeout = options.timeout === undefined ? 10_000 : options.timeout
-    this.server = {
-      mainnet: {
-        api: options.server?.mainnet?.api ?? 'https://api.hypercall.xyz',
-      },
-      testnet: {
-        api: options.server?.testnet?.api ?? 'https://staging-api.cortex-dev.com',
-      },
-    }
-    this.fetchImpl = options.fetch ?? globalThis.fetch
+    this.apiUrl = options.apiUrl ?? MAINNET_API_URL
     this.fetchOptions = options.fetchOptions ?? {}
-    this.onRequest = options.onRequest
-    this.onResponse = options.onResponse
-    this.onError = options.onError
-
-    if (!this.fetchImpl) {
-      throw new HttpRequestError(undefined, {
-        cause: new Error('No fetch implementation available'),
-      })
-    }
   }
 
+  /**
+   * Execute a JSON REST request.
+   *
+   * @param path REST path, including any query string.
+   * @param init Request options for this call.
+   * @param signal {@link https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal | AbortSignal} to cancel the request.
+   * @return Parsed JSON response body.
+   *
+   * @throws {HttpRequestError} When fetch fails, the request is aborted, the request times out, the response is not JSON, or the response is not successful.
+   */
   async request<TResponse = unknown>(
     path: string,
     init: RequestInit = {},
+    signal?: AbortSignal,
   ): Promise<TResponse> {
+    const controller = new AbortController()
+    const timeoutMs = this.timeout
+    const timeout = abort.scheduleTimeout(controller, timeoutMs)
+    const detachRelay = abort.relay([signal, this.fetchOptions.signal, init.signal], controller)
+    const request = { path, init }
+
     try {
-      const url = new URL(path, this.server[this.isTestnet ? 'testnet' : 'mainnet'].api)
+      const url = buildRequestUrl(this.apiUrl, path)
       const requestInit = mergeRequestInit(
         {
           headers: {
             accept: 'application/json',
           },
-          signal: this.timeout === false ? undefined : AbortSignal.timeout(this.timeout),
         },
         this.fetchOptions,
         init,
+        { signal: controller.signal },
       )
 
-      let request = new Request(url, requestInit)
+      const response = await fetch(url, requestInit)
 
-      if (this.onRequest) {
-        request = await this.onRequest(request)
-      }
-
-      let response = await this.fetchImpl(request).catch(async (error) => {
-        if (this.onError) {
-          throw await this.onError(error)
-        }
-        throw error
-      })
-
-      if (this.onResponse) {
-        response = await this.onResponse(response)
+      if (!response.ok || !response.headers.get('content-type')?.includes('application/json')) {
+        const clone = response.clone()
+        const body = await response.text().catch(() => undefined)
+        throw new HttpRequestError({
+          response: clone,
+          detail: body ? truncate(body) : undefined,
+          request,
+        })
       }
 
       const text = await response.text()
-      const body = text ? parseJson(text) : null
-
-      if (!response.ok) {
-        throw new HttpRequestError({ response, body: text })
+      try {
+        return JSON.parse(text) as TResponse
+      } catch (error) {
+        throw new HttpRequestError({
+          response: recreateResponse(response, text),
+          detail: 'Invalid JSON response body',
+          cause: error,
+          request,
+        })
       }
-
-      return body as TResponse
     } catch (error) {
       if (error instanceof TransportError) {
         throw error
       }
-      throw new HttpRequestError(undefined, { cause: error })
+      if (error === timeout.reason) {
+        throw new HttpRequestError({
+          detail: `Request timed out after ${timeoutMs} ms`,
+          cause: error,
+          request,
+        })
+      }
+      if (controller.signal.aborted && error === controller.signal.reason) {
+        throw new HttpRequestError({ detail: 'Request aborted', cause: error, request })
+      }
+      throw new HttpRequestError({ cause: error, request })
+    } finally {
+      timeout.cancel()
+      detachRelay()
     }
   }
 }
 
-function parseJson(text: string): unknown {
-  try {
-    return JSON.parse(text)
-  } catch (error) {
-    throw new HttpRequestError(undefined, { cause: error })
+function truncate(text: string, limit = 1024): string {
+  if (text.length <= limit) {
+    return text
   }
+  return `${text.slice(0, limit)}... (${text.length} chars total)`
+}
+
+function buildRequestUrl(base: string | URL, path: string): URL {
+  const baseUrl = new URL(base)
+  if (!baseUrl.pathname.endsWith('/')) {
+    baseUrl.pathname += '/'
+  }
+  const normalizedPath = path.startsWith('/') ? path.slice(1) : path
+  const url = new URL(normalizedPath, baseUrl)
+  url.search = url.search || baseUrl.search
+  return url
+}
+
+function recreateResponse(original: Response, text: string): Response {
+  return new Response(text || null, {
+    status: original.status,
+    statusText: original.statusText,
+    headers: original.headers,
+  })
 }
 
 function mergeHeadersInit(...inits: Array<HeadersInit | undefined>): Headers {
@@ -168,16 +197,6 @@ function mergeRequestInit(...inits: RequestInit[]): RequestInit {
   }, {})
 
   merged.headers = mergeHeadersInit(...inits.map((init) => init.headers))
-
-  const signals = inits
-    .map((init) => init.signal)
-    .filter((signal): signal is AbortSignal => signal instanceof AbortSignal)
-
-  if (signals.length === 1) {
-    merged.signal = signals[0]
-  } else if (signals.length > 1) {
-    merged.signal = AbortSignal.any(signals)
-  }
 
   return merged
 }
