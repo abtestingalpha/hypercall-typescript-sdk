@@ -1,0 +1,750 @@
+import assert from 'node:assert/strict'
+import { describe, test } from 'node:test'
+
+import { ExchangeClient, ValidationError } from '../../../dist/mod.js'
+import {
+  approveAgent,
+  bulkCancelOrders,
+  cancelOrder,
+  cancelOrderByClientId,
+  placeOrder,
+  replaceOrder,
+  revokeAgent,
+  setMarginMode,
+  setSettlementPayoutsSeen,
+} from '../../../dist/api/exchange/mod.js'
+
+const WALLET = '0xE55B5E5E38F73C30AA367D310D6247F3F9A5E86E'
+const LOWER_WALLET = WALLET.toLowerCase()
+const SIGNER = '0xAB7Bab0e4c09Ff447863f507C16090A9A02792d2'
+const LOWER_SIGNER = SIGNER.toLowerCase()
+
+class MockTransport {
+  calls = []
+  response
+
+  constructor(response = { ok: true }) {
+    this.response = response
+  }
+
+  request(path, init = {}, signal) {
+    this.calls.push({ path, init, signal })
+    return Promise.resolve(this.response)
+  }
+}
+
+function createClient(response) {
+  const transport = new MockTransport(response)
+  return {
+    client: new ExchangeClient({ transport }),
+    transport,
+  }
+}
+
+describe('ExchangeClient', () => {
+  test('approveAgent sends the expected pre-signed request', async () => {
+    const response = {
+      success: true,
+      error: null,
+    }
+    const { client, transport } = createClient(response)
+    const controller = new AbortController()
+
+    const result = await client.approveAgent(
+      {
+        agent: SIGNER,
+        nonce: 123,
+        signature: '0xsignature',
+      },
+      { signal: controller.signal },
+    )
+
+    assert.equal(result, response)
+    assert.equal(transport.calls.length, 1)
+
+    const call = transport.calls[0]
+    assert.equal(call.path, '/approve-agent')
+    assert.equal(call.signal, controller.signal)
+    assert.equal(call.init.method, 'POST')
+    assert.deepEqual(call.init.headers, {
+      'content-type': 'application/json',
+    })
+    assert.deepEqual(JSON.parse(call.init.body), {
+      agent: SIGNER,
+      signature: '0xsignature',
+      nonce: 123,
+    })
+  })
+
+  test('approveAgent accepts the frontend common signed payload shape', async () => {
+    const { client, transport } = createClient({
+      success: true,
+      error: null,
+    })
+
+    await client.approveAgent({
+      wallet: WALLET,
+      signer: SIGNER,
+      agent: SIGNER,
+      nonce: 123,
+      signature: '0xsignature',
+    })
+
+    assert.deepEqual(JSON.parse(transport.calls[0].init.body), {
+      agent: SIGNER,
+      signature: '0xsignature',
+      nonce: 123,
+    })
+  })
+
+  test('revokeAgent sends the expected pre-signed request', async () => {
+    const response = {
+      success: true,
+      error: null,
+    }
+    const { client, transport } = createClient(response)
+
+    const result = await client.revokeAgent({
+      agent: SIGNER,
+      nonce: 123,
+      signature: '0xsignature',
+    })
+
+    assert.equal(result, response)
+    assert.equal(transport.calls.length, 1)
+
+    const call = transport.calls[0]
+    assert.equal(call.path, '/revoke-agent')
+    assert.equal(call.init.method, 'DELETE')
+    assert.deepEqual(call.init.headers, {
+      'content-type': 'application/json',
+    })
+    assert.deepEqual(JSON.parse(call.init.body), {
+      agent: SIGNER,
+      signature: '0xsignature',
+      nonce: 123,
+    })
+  })
+
+  test('low-level agent exports send the same requests', async () => {
+    const transport = new MockTransport()
+
+    await approveAgent({ transport }, {
+      agent: SIGNER,
+      nonce: 456,
+      signature: '0xsignature',
+    })
+    await revokeAgent({ transport }, {
+      agent: SIGNER,
+      nonce: 789,
+      signature: '0xsignature',
+    })
+
+    assert.equal(transport.calls.length, 2)
+    assert.equal(transport.calls[0].path, '/approve-agent')
+    assert.equal(transport.calls[0].init.method, 'POST')
+    assert.equal(transport.calls[1].path, '/revoke-agent')
+    assert.equal(transport.calls[1].init.method, 'DELETE')
+  })
+
+  test('cancelOrder sends the expected pre-signed request', async () => {
+    const response = {
+      success: true,
+      data: null,
+      error: null,
+    }
+    const { client, transport } = createClient(response)
+    const controller = new AbortController()
+
+    const result = await client.cancelOrder(
+      {
+        wallet: WALLET,
+        order_id: 123,
+        nonce: 456,
+        signature: '0xsignature',
+        signer: SIGNER,
+      },
+      { signal: controller.signal },
+    )
+
+    assert.equal(result, response)
+    assert.equal(transport.calls.length, 1)
+
+    const call = transport.calls[0]
+    assert.equal(call.path, '/order')
+    assert.equal(call.signal, controller.signal)
+    assert.equal(call.init.method, 'DELETE')
+    assert.deepEqual(call.init.headers, {
+      'content-type': 'application/json',
+    })
+    assert.deepEqual(JSON.parse(call.init.body), {
+      order_id: 123,
+      wallet: LOWER_WALLET,
+      signature: '0xsignature',
+      nonce: 456,
+      signer: LOWER_SIGNER,
+    })
+  })
+
+  test('cancelOrderByClientId sends the expected pre-signed request', async () => {
+    const response = {
+      success: true,
+      data: null,
+      error: null,
+    }
+    const { client, transport } = createClient(response)
+
+    const result = await client.cancelOrderByClientId({
+      wallet: WALLET,
+      client_id: 'client-123',
+      nonce: 456,
+      signature: '0xsignature',
+      signer: SIGNER,
+    })
+
+    assert.equal(result, response)
+    assert.equal(transport.calls.length, 1)
+
+    const call = transport.calls[0]
+    assert.equal(call.path, '/order_cloid')
+    assert.equal(call.init.method, 'DELETE')
+    assert.deepEqual(call.init.headers, {
+      'content-type': 'application/json',
+    })
+    assert.deepEqual(JSON.parse(call.init.body), {
+      client_id: 'client-123',
+      wallet: LOWER_WALLET,
+      signature: '0xsignature',
+      nonce: 456,
+      signer: LOWER_SIGNER,
+    })
+  })
+
+  test('bulkCancelOrders sends the expected pre-signed request', async () => {
+    const response = {
+      results: [
+        {
+          index: 0,
+          success: true,
+          data: null,
+          error: null,
+        },
+      ],
+    }
+    const { client, transport } = createClient(response)
+
+    const result = await client.bulkCancelOrders({
+      cancels: [
+        {
+          wallet: WALLET,
+          order_id: 123,
+          nonce: 456,
+          signature: '0xsignature',
+          signer: SIGNER,
+        },
+        {
+          wallet: SIGNER,
+          order_id: 124,
+          nonce: 457,
+          signature: '0xsignature2',
+        },
+      ],
+    })
+
+    assert.equal(result, response)
+    assert.equal(transport.calls.length, 1)
+
+    const call = transport.calls[0]
+    assert.equal(call.path, '/bulk_order')
+    assert.equal(call.init.method, 'DELETE')
+    assert.deepEqual(call.init.headers, {
+      'content-type': 'application/json',
+    })
+    assert.deepEqual(JSON.parse(call.init.body), {
+      cancels: [
+        {
+          order_id: 123,
+          wallet: LOWER_WALLET,
+          signature: '0xsignature',
+          nonce: 456,
+          signer: LOWER_SIGNER,
+        },
+        {
+          order_id: 124,
+          wallet: LOWER_SIGNER,
+          signature: '0xsignature2',
+          nonce: 457,
+        },
+      ],
+    })
+  })
+
+  test('low-level cancel exports send the same requests', async () => {
+    const transport = new MockTransport()
+
+    await cancelOrder({ transport }, {
+      wallet: WALLET,
+      order_id: 123,
+      nonce: 456,
+      signature: '0xsignature',
+    })
+    await cancelOrderByClientId({ transport }, {
+      wallet: WALLET,
+      client_id: 'client-123',
+      nonce: 457,
+      signature: '0xsignature',
+    })
+    await bulkCancelOrders({ transport }, {
+      cancels: [{
+        wallet: WALLET,
+        order_id: 124,
+        nonce: 458,
+        signature: '0xsignature',
+      }],
+    })
+
+    assert.equal(transport.calls.length, 3)
+    assert.equal(transport.calls[0].path, '/order')
+    assert.equal(transport.calls[0].init.method, 'DELETE')
+    assert.equal(transport.calls[1].path, '/order_cloid')
+    assert.equal(transport.calls[1].init.method, 'DELETE')
+    assert.equal(transport.calls[2].path, '/bulk_order')
+    assert.equal(transport.calls[2].init.method, 'DELETE')
+  })
+
+  test('placeOrder sends the expected pre-signed request', async () => {
+    const response = {
+      timestamp: 1,
+      info: {
+        symbol: 'BTC-30JUN26-100000-C',
+        price: '100',
+        size: '0.1',
+        side: 'Buy',
+        tif: 'gtc',
+        client_id: 'client-123',
+        order_id: 123,
+        is_perp: false,
+        underlying: null,
+        reduce_only: null,
+        nonce: 456,
+        signature: null,
+      },
+      status: 'OPEN_ORDER',
+      reason: null,
+      filled_size: '0',
+      order_id: 123,
+      wallet_address: LOWER_WALLET,
+    }
+    const { client, transport } = createClient(response)
+    const controller = new AbortController()
+
+    const result = await client.placeOrder(
+      {
+        wallet: WALLET,
+        symbol: 'BTC-30JUN26-100000-C',
+        side: 'Buy',
+        size: '0.1',
+        price: '100',
+        tif: 'gtc',
+        route: 'best_execution',
+        client_id: 'client-123',
+        nonce: 456,
+        signature: '0xsignature',
+        signer: SIGNER,
+        mmp_enabled: true,
+        builder_code_address: SIGNER,
+      },
+      { signal: controller.signal },
+    )
+
+    assert.equal(result, response)
+    assert.equal(transport.calls.length, 1)
+
+    const call = transport.calls[0]
+    assert.equal(call.path, '/order')
+    assert.equal(call.signal, controller.signal)
+    assert.equal(call.init.method, 'POST')
+    assert.deepEqual(call.init.headers, {
+      'content-type': 'application/json',
+    })
+    assert.deepEqual(JSON.parse(call.init.body), {
+      symbol: 'BTC-30JUN26-100000-C',
+      side: 'Buy',
+      size: '0.1',
+      price: '100',
+      tif: 'gtc',
+      route: 'best_execution',
+      client_id: 'client-123',
+      mmp_enabled: true,
+      builder_code_address: SIGNER,
+      wallet: LOWER_WALLET,
+      signature: '0xsignature',
+      nonce: 456,
+      signer: LOWER_SIGNER,
+    })
+  })
+
+  test('replaceOrder sends the expected pre-signed request', async () => {
+    const response = {
+      timestamp: 1,
+      info: {
+        symbol: 'BTC-30JUN26-100000-C',
+        price: '101',
+        size: '0.1',
+        side: 'Buy',
+        tif: 'gtc',
+        client_id: 'client-124',
+        order_id: 123,
+        is_perp: false,
+        underlying: null,
+        reduce_only: null,
+        nonce: 457,
+        signature: null,
+      },
+      status: 'OPEN_ORDER',
+      reason: null,
+      filled_size: '0',
+      order_id: 124,
+      wallet_address: LOWER_WALLET,
+    }
+    const { client, transport } = createClient(response)
+
+    const result = await client.replaceOrder({
+      wallet: WALLET,
+      order_id: 123,
+      symbol: 'BTC-30JUN26-100000-C',
+      side: 'Buy',
+      size: '0.1',
+      price: '101',
+      tif: 'gtc',
+      client_id: '',
+      nonce: 457,
+      signature: '0xsignature',
+      signer: SIGNER,
+      builder_code_address: null,
+    })
+
+    assert.equal(result, response)
+    assert.equal(transport.calls.length, 1)
+
+    const call = transport.calls[0]
+    assert.equal(call.path, '/order')
+    assert.equal(call.init.method, 'PUT')
+    assert.deepEqual(call.init.headers, {
+      'content-type': 'application/json',
+    })
+    assert.deepEqual(JSON.parse(call.init.body), {
+      order_id: 123,
+      symbol: 'BTC-30JUN26-100000-C',
+      side: 'Buy',
+      size: '0.1',
+      price: '101',
+      tif: 'gtc',
+      client_id: '',
+      builder_code_address: null,
+      wallet: LOWER_WALLET,
+      signature: '0xsignature',
+      nonce: 457,
+      signer: LOWER_SIGNER,
+    })
+  })
+
+  test('low-level order write exports send the same requests', async () => {
+    const transport = new MockTransport()
+
+    await placeOrder({ transport }, {
+      wallet: WALLET,
+      symbol: 'BTC-30JUN26-100000-C',
+      side: 'Buy',
+      size: '0.1',
+      price: '100',
+      tif: 'gtc',
+      nonce: 456,
+      signature: '0xsignature',
+    })
+    await replaceOrder({ transport }, {
+      wallet: WALLET,
+      order_id: 123,
+      symbol: 'BTC-30JUN26-100000-C',
+      side: 'Sell',
+      size: '0.2',
+      price: '99',
+      tif: 'ioc',
+      nonce: 457,
+      signature: '0xsignature',
+    })
+
+    assert.equal(transport.calls.length, 2)
+    assert.equal(transport.calls[0].path, '/order')
+    assert.equal(transport.calls[0].init.method, 'POST')
+    assert.equal(transport.calls[1].path, '/order')
+    assert.equal(transport.calls[1].init.method, 'PUT')
+  })
+
+  test('setMarginMode sends the expected pre-signed request', async () => {
+    const response = {
+      success: true,
+      data: {
+        wallet: LOWER_WALLET,
+        margin_mode: 'standard',
+        previous_mode: 'portfolio',
+      },
+      error: null,
+    }
+    const { client, transport } = createClient(response)
+    const controller = new AbortController()
+
+    const result = await client.setMarginMode(
+      {
+        wallet: WALLET,
+        margin_mode: 'standard',
+        nonce: 456,
+        signature: '0xsignature',
+        signer: SIGNER,
+      },
+      { signal: controller.signal },
+    )
+
+    assert.equal(result, response)
+    assert.equal(transport.calls.length, 1)
+
+    const call = transport.calls[0]
+    assert.equal(call.path, '/margin-mode')
+    assert.equal(call.signal, controller.signal)
+    assert.equal(call.init.method, 'POST')
+    assert.deepEqual(call.init.headers, {
+      'content-type': 'application/json',
+    })
+    assert.deepEqual(JSON.parse(call.init.body), {
+      margin_mode: 'standard',
+      wallet: LOWER_WALLET,
+      signature: '0xsignature',
+      nonce: 456,
+      signer: LOWER_SIGNER,
+    })
+  })
+
+  test('low-level setMarginMode export sends the same request', async () => {
+    const transport = new MockTransport()
+
+    await setMarginMode({ transport }, {
+      wallet: WALLET,
+      margin_mode: 'portfolio',
+      nonce: 456,
+      signature: '0xsignature',
+    })
+
+    assert.equal(transport.calls.length, 1)
+    assert.equal(transport.calls[0].path, '/margin-mode')
+    assert.deepEqual(JSON.parse(transport.calls[0].init.body), {
+      margin_mode: 'portfolio',
+      wallet: LOWER_WALLET,
+      signature: '0xsignature',
+      nonce: 456,
+    })
+  })
+
+  test('setSettlementPayoutsSeen sends the expected pre-signed request', async () => {
+    const response = {
+      success: true,
+      requested: 3,
+      affected: 2,
+      error: null,
+    }
+    const { client, transport } = createClient(response)
+    const controller = new AbortController()
+
+    const result = await client.setSettlementPayoutsSeen(
+      {
+        wallet: WALLET,
+        ids: [5, 2, 2],
+        nonce: 123,
+        signature: '0xsignature',
+        signer: SIGNER,
+      },
+      { signal: controller.signal },
+    )
+
+    assert.equal(result, response)
+    assert.equal(transport.calls.length, 1)
+
+    const call = transport.calls[0]
+    assert.equal(call.path, '/settlement-payouts/seen')
+    assert.equal(call.signal, controller.signal)
+    assert.equal(call.init.method, 'POST')
+    assert.deepEqual(call.init.headers, {
+      'content-type': 'application/json',
+    })
+    assert.deepEqual(JSON.parse(call.init.body), {
+      ids: [5, 2, 2],
+      wallet: LOWER_WALLET,
+      signature: '0xsignature',
+      nonce: 123,
+      signer: LOWER_SIGNER,
+    })
+  })
+
+  test('low-level setSettlementPayoutsSeen export sends the same request', async () => {
+    const transport = new MockTransport()
+
+    await setSettlementPayoutsSeen({ transport }, {
+      wallet: WALLET,
+      ids: [123],
+      nonce: 456,
+      signature: '0xsignature',
+    })
+
+    assert.equal(transport.calls.length, 1)
+    assert.equal(transport.calls[0].path, '/settlement-payouts/seen')
+    assert.deepEqual(JSON.parse(transport.calls[0].init.body), {
+      ids: [123],
+      wallet: LOWER_WALLET,
+      signature: '0xsignature',
+      nonce: 456,
+    })
+  })
+
+  test('validates parameters before sending a request', () => {
+    const { client, transport } = createClient()
+
+    assert.throws(
+      () =>
+        client.approveAgent({
+          agent: 'not-a-wallet',
+          nonce: 1,
+          signature: '0xsignature',
+        }),
+      ValidationError,
+    )
+
+    assert.throws(
+      () =>
+        client.revokeAgent({
+          agent: SIGNER,
+          nonce: -1,
+          signature: '0xsignature',
+        }),
+      ValidationError,
+    )
+
+    assert.throws(
+      () =>
+        client.cancelOrder({
+          wallet: WALLET,
+          order_id: 0,
+          nonce: 1,
+          signature: '0xsignature',
+        }),
+      ValidationError,
+    )
+
+    assert.throws(
+      () =>
+        client.cancelOrderByClientId({
+          wallet: WALLET,
+          client_id: '',
+          nonce: 1,
+          signature: '0xsignature',
+        }),
+      ValidationError,
+    )
+
+    assert.throws(
+      () =>
+        client.placeOrder({
+          wallet: WALLET,
+          symbol: 'BTC-30JUN26-100000-C',
+          side: 'buy',
+          size: '0.1',
+          price: '100',
+          tif: 'gtc',
+          nonce: 1,
+          signature: '0xsignature',
+        }),
+      ValidationError,
+    )
+
+    assert.throws(
+      () =>
+        client.replaceOrder({
+          wallet: WALLET,
+          order_id: 0,
+          symbol: 'BTC-30JUN26-100000-C',
+          side: 'Buy',
+          size: '0.1',
+          price: '100',
+          tif: 'gtc',
+          nonce: 1,
+          signature: '0xsignature',
+        }),
+      ValidationError,
+    )
+
+    assert.throws(
+      () =>
+        client.setMarginMode({
+          wallet: WALLET,
+          margin_mode: 'cross',
+          nonce: 1,
+          signature: '0xsignature',
+        }),
+      ValidationError,
+    )
+
+    assert.throws(
+      () =>
+        client.bulkCancelOrders({
+          cancels: [],
+        }),
+      ValidationError,
+    )
+
+    assert.throws(
+      () =>
+        client.bulkCancelOrders({
+          cancels: Array.from({ length: 51 }, (_, index) => ({
+            wallet: WALLET,
+            order_id: index + 1,
+            nonce: index + 1,
+            signature: '0xsignature',
+          })),
+        }),
+      ValidationError,
+    )
+
+    assert.throws(
+      () =>
+        client.setSettlementPayoutsSeen({
+          wallet: 'not-a-wallet',
+          ids: [1],
+          nonce: 1,
+          signature: '0xsignature',
+        }),
+      ValidationError,
+    )
+
+    assert.throws(
+      () =>
+        client.setSettlementPayoutsSeen({
+          wallet: WALLET,
+          ids: [],
+          nonce: 1,
+          signature: '0xsignature',
+        }),
+      ValidationError,
+    )
+
+    assert.throws(
+      () =>
+        client.setSettlementPayoutsSeen({
+          wallet: WALLET,
+          ids: [1, 0],
+          nonce: 1,
+          signature: '0xsignature',
+        }),
+      ValidationError,
+    )
+
+    assert.deepEqual(transport.calls, [])
+  })
+})

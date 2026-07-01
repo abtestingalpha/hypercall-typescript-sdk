@@ -11,11 +11,23 @@
   "exports": {
     ".": {
       "types": "./dist/mod.d.ts",
-      "import": "./dist/mod.js"
+      "import": "./dist/mod.js",
+      "default": "./dist/mod.js"
     },
     "./api/info": {
       "types": "./dist/api/info/mod.d.ts",
-      "import": "./dist/api/info/mod.js"
+      "import": "./dist/api/info/mod.js",
+      "default": "./dist/api/info/mod.js"
+    },
+    "./api/exchange": {
+      "types": "./dist/api/exchange/mod.d.ts",
+      "import": "./dist/api/exchange/mod.js",
+      "default": "./dist/api/exchange/mod.js"
+    },
+    "./signing": {
+      "types": "./dist/signing/mod.d.ts",
+      "import": "./dist/signing/mod.js",
+      "default": "./dist/signing/mod.js"
     }
   },
   "files": [

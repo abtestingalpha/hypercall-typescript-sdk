@@ -3,10 +3,12 @@
  *
  * The main entrypoint exports:
  * - Transports: {@link HttpTransport}
- * - Clients: {@link InfoClient}
+ * - Clients: {@link InfoClient}, {@link ExchangeClient}
  *
  * For tree-shakeable, low-level access you can import request methods directly from:
  * - `@hypercall/sdk/api/info`
+ * - `@hypercall/sdk/api/exchange`
+ * - `@hypercall/sdk/signing`
  *
  * @example Quick start
  * ```ts
@@ -24,4 +26,5 @@
 
 export { HypercallError, ValidationError } from './_base.ts'
 export * from './transport/mod.ts'
+export * from './api/exchange/client.ts'
 export * from './api/info/client.ts'

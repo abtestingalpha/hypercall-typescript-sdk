@@ -4,7 +4,9 @@
   "license": "MIT",
   "exports": {
     ".": "./src/mod.ts",
-    "./api/info": "./src/api/info/mod.ts"
+    "./api/info": "./src/api/info/mod.ts",
+    "./api/exchange": "./src/api/exchange/mod.ts",
+    "./signing": "./src/signing/mod.ts"
   },
   "imports": {
     "@valibot/valibot": "jsr:@valibot/valibot@^1.4.1"

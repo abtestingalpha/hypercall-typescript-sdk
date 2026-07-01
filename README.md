@@ -6,9 +6,10 @@ A TypeScript SDK for Hypercall API consumers, patterned after the current
 The package exposes:
 
 - **Transport:** `HttpTransport`
-- **Client:** `InfoClient`
-- **Low-level methods:** `@hypercall/sdk/api/info`
-- **Types:** request, response, and domain types for the exported Info API methods
+- **Clients:** `InfoClient`, `ExchangeClient`
+- **Low-level methods:** `@hypercall/sdk/api/info`, `@hypercall/sdk/api/exchange`
+- **Signing helpers:** `@hypercall/sdk/signing`
+- **Types:** request, response, and domain types for the exported API methods
 
 ## Installation
 
@@ -72,6 +73,121 @@ const summaries = await info.optionSummaries(
 )
 
 console.log(summaries.result?.[0]?.instrument_name)
+```
+
+## Exchange API Examples
+
+Exchange methods mutate state and currently accept pre-signed request payloads.
+The SDK submits and validates the request shape, while the caller owns wallet
+connection, nonce selection, and EIP-712 signing.
+
+```ts
+import { ExchangeClient, HttpTransport } from '@hypercall/sdk'
+
+const transport = new HttpTransport({ apiUrl: 'https://api.hypercall.xyz' })
+const exchange = new ExchangeClient({ transport })
+
+const response = await exchange.setSettlementPayoutsSeen({
+  wallet: '0x0000000000000000000000000000000000000000',
+  ids: [123],
+  nonce: 1,
+  signature: '0x...',
+})
+
+console.log(response.success)
+console.log(response.affected)
+```
+
+```ts
+const approved = await exchange.approveAgent({
+  agent: '0x0000000000000000000000000000000000000000',
+  nonce: 1,
+  signature: '0x...',
+})
+
+console.log(approved.success)
+```
+
+```ts
+const placed = await exchange.placeOrder({
+  wallet: '0x0000000000000000000000000000000000000000',
+  symbol: 'BTC-30JUN26-100000-C',
+  side: 'Buy',
+  size: '0.1',
+  price: '100',
+  tif: 'gtc',
+  client_id: 'client-123',
+  nonce: 2,
+  signature: '0x...',
+})
+
+console.log(placed.status)
+```
+
+```ts
+const replaced = await exchange.replaceOrder({
+  wallet: '0x0000000000000000000000000000000000000000',
+  order_id: 123,
+  symbol: 'BTC-30JUN26-100000-C',
+  side: 'Buy',
+  size: '0.1',
+  price: '101',
+  tif: 'gtc',
+  client_id: 'client-124',
+  nonce: 3,
+  signature: '0x...',
+})
+
+console.log(replaced.status)
+```
+
+```ts
+const marginMode = await exchange.setMarginMode({
+  wallet: '0x0000000000000000000000000000000000000000',
+  margin_mode: 'standard',
+  nonce: 4,
+  signature: '0x...',
+})
+
+console.log(marginMode.success)
+```
+
+```ts
+const canceled = await exchange.cancelOrder({
+  wallet: '0x0000000000000000000000000000000000000000',
+  order_id: 123,
+  nonce: 5,
+  signature: '0x...',
+})
+
+console.log(canceled.success)
+```
+
+## Signing Helpers
+
+The signing subpath exposes the same EIP-712 maps and value builders used by
+the frontend. Pass the chain id from your app environment.
+
+```ts
+import {
+  APPROVE_AGENT_TYPES,
+  buildApproveAgentValue,
+  buildTypedData,
+} from '@hypercall/sdk/signing'
+
+const message = buildApproveAgentValue(
+  '0x0000000000000000000000000000000000000000',
+  1,
+)
+
+const typedData = buildTypedData({
+  chainId: 999,
+  primaryType: 'ApproveAgent',
+  types: APPROVE_AGENT_TYPES,
+  message,
+})
+
+console.log(typedData.primaryType)
 ```
 
 ### Exchange Metadata
@@ -398,7 +514,8 @@ The source layout follows the current `@nktkas/hyperliquid` repository style:
 - `deno.json` exports source `.ts` entrypoints.
 - Source files import other source files with `.ts` extensions.
 - Domain clients live under `src/api/<domain>/client.ts`.
-- Low-level tree-shakeable methods live under `src/api/<domain>/_methods/`.
+- Low-level methods live under `src/api/<domain>/_methods/`, matching the
+  `@nktkas/hyperliquid` package shape.
 
 For local Next.js usage, `package.json` builds `dist/` with JavaScript
 imports rewritten from `.ts` to `.js`.
