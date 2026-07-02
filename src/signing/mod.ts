@@ -52,6 +52,12 @@ export function buildTypedData<const TPrimaryType extends string, const TMessage
   } as const
 }
 
+/**
+ * Legacy PlaceOrder typed-data fields used by the current frontend.
+ *
+ * This shape intentionally does not include `route`. Do not send `route` with
+ * a signature produced from these fields.
+ */
 export const PLACE_ORDER_TYPES = {
   PlaceOrder: [
     { name: 'wallet', type: 'address' },
@@ -64,6 +70,27 @@ export const PLACE_ORDER_TYPES = {
     { name: 'nonce', type: 'uint64' },
   ],
 } as const satisfies Record<string, readonly TypedField[]>
+
+/**
+ * Route-aware PlaceOrder typed-data fields used by the current backend.
+ *
+ * Use this map only when the request body also sends the same `route` value.
+ */
+export const PLACE_ORDER_WITH_ROUTE_TYPES = {
+  PlaceOrder: [
+    { name: 'wallet', type: 'address' },
+    { name: 'symbol', type: 'string' },
+    { name: 'side', type: 'string' },
+    { name: 'size', type: 'string' },
+    { name: 'price', type: 'string' },
+    { name: 'tif', type: 'string' },
+    { name: 'route', type: 'string' },
+    { name: 'clientId', type: 'string' },
+    { name: 'nonce', type: 'uint64' },
+  ],
+} as const satisfies Record<string, readonly TypedField[]>
+
+export type PlaceOrderRoute = 'best_execution' | 'book_only' | 'rfq_only'
 
 export const CANCEL_ORDER_TYPES = {
   CancelOrder: [
@@ -133,38 +160,6 @@ export const SET_SETTLEMENT_PAYOUT_SEEN_TYPES = {
     { name: 'wallet', type: 'address' },
     { name: 'payoutIds', type: 'string' },
     { name: 'seen', type: 'bool' },
-    { name: 'nonce', type: 'uint64' },
-  ],
-} as const satisfies Record<string, readonly TypedField[]>
-
-export const PUSH_ACTION_TYPES = {
-  PushAction: [
-    { name: 'wallet', type: 'address' },
-    { name: 'action', type: 'string' },
-    { name: 'nonce', type: 'uint64' },
-  ],
-} as const satisfies Record<string, readonly TypedField[]>
-
-export const SUBMIT_USERNAME_REQUEST_TYPES = {
-  SubmitUsernameRequest: [
-    { name: 'wallet', type: 'address' },
-    { name: 'requestedUsername', type: 'string' },
-    { name: 'nonce', type: 'uint64' },
-  ],
-} as const satisfies Record<string, readonly TypedField[]>
-
-export const SET_USERNAME_TYPES = {
-  SetUsername: [
-    { name: 'wallet', type: 'address' },
-    { name: 'username', type: 'string' },
-    { name: 'nonce', type: 'uint64' },
-  ],
-} as const satisfies Record<string, readonly TypedField[]>
-
-export const SET_PROFILE_IMAGE_TYPES = {
-  SetProfileImage: [
-    { name: 'wallet', type: 'address' },
-    { name: 'imageSha256', type: 'string' },
     { name: 'nonce', type: 'uint64' },
   ],
 } as const satisfies Record<string, readonly TypedField[]>
@@ -282,66 +277,22 @@ export function buildWithdrawUsdcValue(params: {
 
 export function buildSetSettlementPayoutSeenValue(params: {
   wallet: string
-  payoutIds: string
-  seen: boolean
+  ids: readonly number[]
   nonce: bigint | number
 }) {
   return {
     wallet: params.wallet.toLowerCase(),
-    payoutIds: params.payoutIds,
-    seen: params.seen,
+    payoutIds: canonicalizeSettlementPayoutIds(params.ids),
+    seen: true,
     nonce: BigInt(params.nonce),
   } as const
 }
 
-export function buildPushActionValue(params: {
-  wallet: string
-  action: string
-  nonce: bigint | number
-}) {
-  return {
-    wallet: params.wallet.toLowerCase() as `0x${string}`,
-    action: params.action,
-    nonce: BigInt(params.nonce),
-  } as const
-}
-
-export function buildSubmitUsernameRequestValue(params: {
-  wallet: string
-  requestedUsername: string
-  nonce: bigint | number
-}) {
-  return {
-    wallet: params.wallet.toLowerCase(),
-    requestedUsername: params.requestedUsername.trim(),
-    nonce: BigInt(params.nonce),
-  } as const
-}
-
-export function buildSetUsernameValue(params: {
-  wallet: string
-  username: string
-  nonce: bigint | number
-}) {
-  return {
-    wallet: params.wallet.toLowerCase(),
-    username: params.username.trim(),
-    nonce: BigInt(params.nonce),
-  } as const
-}
-
-export function buildSetProfileImageValue(params: {
-  wallet: string
-  imageSha256: string
-  nonce: bigint | number
-}) {
-  return {
-    wallet: params.wallet.toLowerCase(),
-    imageSha256: params.imageSha256.trim().toLowerCase(),
-    nonce: BigInt(params.nonce),
-  } as const
-}
-
+/**
+ * Build the legacy no-route PlaceOrder typed-data message.
+ *
+ * Do not send `route` with a signature produced from this helper.
+ */
 export function buildPlaceOrderValue(params: {
   wallet: string
   symbol: string
@@ -359,6 +310,35 @@ export function buildPlaceOrderValue(params: {
     size: params.size,
     price: params.price,
     tif: params.tif,
+    clientId: params.clientId ?? '',
+    nonce: BigInt(params.nonce),
+  } as const
+}
+
+/**
+ * Build the route-aware PlaceOrder typed-data message.
+ *
+ * The returned `route` value must match the request body's `route`.
+ */
+export function buildPlaceOrderWithRouteValue(params: {
+  wallet: string
+  symbol: string
+  side: 'Buy' | 'Sell'
+  size: string
+  price: string
+  tif: 'gtc' | 'ioc' | 'fok'
+  route: PlaceOrderRoute
+  clientId?: string
+  nonce: bigint | number
+}) {
+  return {
+    wallet: params.wallet.toLowerCase(),
+    symbol: params.symbol,
+    side: params.side,
+    size: params.size,
+    price: params.price,
+    tif: params.tif,
+    route: params.route,
     clientId: params.clientId ?? '',
     nonce: BigInt(params.nonce),
   } as const
@@ -489,18 +469,30 @@ export type SignedPayloadBase = {
   wallet: string
   nonce: number
   signature: string
-  signer?: string
 }
 
 /** Build the wire body used by Hypercall pre-signed write endpoints. */
 export function buildSignedBody<const TPayload extends SignedPayloadBase>(payload: TPayload) {
-  const { wallet, signature, nonce, signer, ...rest } = payload
+  const { wallet, signature, nonce, signer: _ignoredSigner, ...rest } = payload as TPayload & { signer?: unknown }
 
   return {
     ...rest,
     wallet: wallet.toLowerCase(),
     signature,
     nonce,
-    ...(signer ? { signer: signer.toLowerCase() } : {}),
   }
+}
+
+function canonicalizeSettlementPayoutIds(ids: readonly number[]): string {
+  if (ids.length === 0) {
+    throw new TypeError('Expected at least one settlement payout ID')
+  }
+
+  return ids.map((id) => {
+    if (!Number.isSafeInteger(id) || id <= 0) {
+      throw new TypeError('Expected settlement payout IDs to be positive safe integers')
+    }
+
+    return String(id)
+  }).join(',')
 }

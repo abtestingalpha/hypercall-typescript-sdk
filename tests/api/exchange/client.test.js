@@ -3,8 +3,10 @@ import { describe, test } from 'node:test'
 
 import { ExchangeClient, ValidationError } from '../../../dist/mod.js'
 import {
+  acceptRfqQuote,
   approveAgent,
   bulkCancelOrders,
+  bulkCancelOrdersByClientId,
   cancelOrder,
   cancelOrderByClientId,
   placeOrder,
@@ -12,12 +14,17 @@ import {
   revokeAgent,
   setMarginMode,
   setSettlementPayoutsSeen,
+  submitStandardMarginLiquidation,
+  submitRfq,
+  withdrawUsdc,
 } from '../../../dist/api/exchange/mod.js'
 
 const WALLET = '0xE55B5E5E38F73C30AA367D310D6247F3F9A5E86E'
 const LOWER_WALLET = WALLET.toLowerCase()
 const SIGNER = '0xAB7Bab0e4c09Ff447863f507C16090A9A02792d2'
 const LOWER_SIGNER = SIGNER.toLowerCase()
+const LIQUIDATED_WALLET = '0x1111111111111111111111111111111111111111'
+const DESTINATION_WALLET = '0x2222222222222222222222222222222222222222'
 
 class MockTransport {
   calls = []
@@ -84,7 +91,6 @@ describe('ExchangeClient', () => {
 
     await client.approveAgent({
       wallet: WALLET,
-      signer: SIGNER,
       agent: SIGNER,
       nonce: 123,
       signature: '0xsignature',
@@ -162,7 +168,6 @@ describe('ExchangeClient', () => {
         order_id: 123,
         nonce: 456,
         signature: '0xsignature',
-        signer: SIGNER,
       },
       { signal: controller.signal },
     )
@@ -182,7 +187,6 @@ describe('ExchangeClient', () => {
       wallet: LOWER_WALLET,
       signature: '0xsignature',
       nonce: 456,
-      signer: LOWER_SIGNER,
     })
   })
 
@@ -199,7 +203,6 @@ describe('ExchangeClient', () => {
       client_id: 'client-123',
       nonce: 456,
       signature: '0xsignature',
-      signer: SIGNER,
     })
 
     assert.equal(result, response)
@@ -216,7 +219,6 @@ describe('ExchangeClient', () => {
       wallet: LOWER_WALLET,
       signature: '0xsignature',
       nonce: 456,
-      signer: LOWER_SIGNER,
     })
   })
 
@@ -240,7 +242,6 @@ describe('ExchangeClient', () => {
           order_id: 123,
           nonce: 456,
           signature: '0xsignature',
-          signer: SIGNER,
         },
         {
           wallet: SIGNER,
@@ -267,10 +268,71 @@ describe('ExchangeClient', () => {
           wallet: LOWER_WALLET,
           signature: '0xsignature',
           nonce: 456,
-          signer: LOWER_SIGNER,
         },
         {
           order_id: 124,
+          wallet: LOWER_SIGNER,
+          signature: '0xsignature2',
+          nonce: 457,
+        },
+      ],
+    })
+  })
+
+  test('bulkCancelOrdersByClientId sends the expected pre-signed request', async () => {
+    const response = {
+      results: [
+        {
+          index: 0,
+          success: true,
+          data: null,
+          error: null,
+        },
+      ],
+    }
+    const { client, transport } = createClient(response)
+    const controller = new AbortController()
+
+    const result = await client.bulkCancelOrdersByClientId(
+      {
+        cancels: [
+          {
+            wallet: WALLET,
+            client_id: 'client-123',
+            nonce: 456,
+            signature: '0xsignature',
+          },
+          {
+            wallet: SIGNER,
+            client_id: 'client-124',
+            nonce: 457,
+            signature: '0xsignature2',
+          },
+        ],
+      },
+      { signal: controller.signal },
+    )
+
+    assert.equal(result, response)
+    assert.equal(transport.calls.length, 1)
+
+    const call = transport.calls[0]
+    assert.equal(call.path, '/bulk_order_cloid')
+    assert.equal(call.signal, controller.signal)
+    assert.equal(call.init.method, 'DELETE')
+    assert.deepEqual(call.init.headers, {
+      'content-type': 'application/json',
+    })
+    assert.deepEqual(JSON.parse(call.init.body), {
+      cancels: [
+        {
+          client_id: 'client-123',
+          wallet: LOWER_WALLET,
+          signature: '0xsignature',
+          nonce: 456,
+        },
+        {
+          client_id: 'client-124',
           wallet: LOWER_SIGNER,
           signature: '0xsignature2',
           nonce: 457,
@@ -302,14 +364,24 @@ describe('ExchangeClient', () => {
         signature: '0xsignature',
       }],
     })
+    await bulkCancelOrdersByClientId({ transport }, {
+      cancels: [{
+        wallet: WALLET,
+        client_id: 'client-124',
+        nonce: 459,
+        signature: '0xsignature',
+      }],
+    })
 
-    assert.equal(transport.calls.length, 3)
+    assert.equal(transport.calls.length, 4)
     assert.equal(transport.calls[0].path, '/order')
     assert.equal(transport.calls[0].init.method, 'DELETE')
     assert.equal(transport.calls[1].path, '/order_cloid')
     assert.equal(transport.calls[1].init.method, 'DELETE')
     assert.equal(transport.calls[2].path, '/bulk_order')
     assert.equal(transport.calls[2].init.method, 'DELETE')
+    assert.equal(transport.calls[3].path, '/bulk_order_cloid')
+    assert.equal(transport.calls[3].init.method, 'DELETE')
   })
 
   test('placeOrder sends the expected pre-signed request', async () => {
@@ -350,7 +422,6 @@ describe('ExchangeClient', () => {
         client_id: 'client-123',
         nonce: 456,
         signature: '0xsignature',
-        signer: SIGNER,
         mmp_enabled: true,
         builder_code_address: SIGNER,
       },
@@ -380,7 +451,6 @@ describe('ExchangeClient', () => {
       wallet: LOWER_WALLET,
       signature: '0xsignature',
       nonce: 456,
-      signer: LOWER_SIGNER,
     })
   })
 
@@ -420,7 +490,6 @@ describe('ExchangeClient', () => {
       client_id: '',
       nonce: 457,
       signature: '0xsignature',
-      signer: SIGNER,
       builder_code_address: null,
     })
 
@@ -445,7 +514,6 @@ describe('ExchangeClient', () => {
       wallet: LOWER_WALLET,
       signature: '0xsignature',
       nonce: 457,
-      signer: LOWER_SIGNER,
     })
   })
 
@@ -500,7 +568,6 @@ describe('ExchangeClient', () => {
         margin_mode: 'standard',
         nonce: 456,
         signature: '0xsignature',
-        signer: SIGNER,
       },
       { signal: controller.signal },
     )
@@ -520,7 +587,6 @@ describe('ExchangeClient', () => {
       wallet: LOWER_WALLET,
       signature: '0xsignature',
       nonce: 456,
-      signer: LOWER_SIGNER,
     })
   })
 
@@ -560,7 +626,6 @@ describe('ExchangeClient', () => {
         ids: [5, 2, 2],
         nonce: 123,
         signature: '0xsignature',
-        signer: SIGNER,
       },
       { signal: controller.signal },
     )
@@ -580,7 +645,6 @@ describe('ExchangeClient', () => {
       wallet: LOWER_WALLET,
       signature: '0xsignature',
       nonce: 123,
-      signer: LOWER_SIGNER,
     })
   })
 
@@ -602,6 +666,258 @@ describe('ExchangeClient', () => {
       signature: '0xsignature',
       nonce: 456,
     })
+  })
+
+  test('withdrawUsdc sends the expected owner-signed request', async () => {
+    const response = {
+      success: true,
+      request_id: 'withdrawal-1',
+      directive_id: 'directive-1',
+      domain_status: 'queued',
+      delivery_status: 'pending',
+      balance_after: '100.5',
+      message: 'USDC withdrawal accepted',
+    }
+    const { client, transport } = createClient(response)
+    const controller = new AbortController()
+
+    const result = await client.withdrawUsdc(
+      {
+        wallet: WALLET,
+        account: LOWER_WALLET,
+        destination: DESTINATION_WALLET,
+        amount: '25.5',
+        nonce: 789,
+        signature: '0xsignature',
+      },
+      { signal: controller.signal },
+    )
+
+    assert.equal(result, response)
+    assert.equal(transport.calls.length, 1)
+
+    const call = transport.calls[0]
+    assert.equal(call.path, '/withdraw/usdc')
+    assert.equal(call.signal, controller.signal)
+    assert.equal(call.init.method, 'POST')
+    assert.deepEqual(call.init.headers, {
+      'content-type': 'application/json',
+    })
+    assert.deepEqual(JSON.parse(call.init.body), {
+      account: LOWER_WALLET,
+      destination: DESTINATION_WALLET,
+      amount: '25.5',
+      wallet: LOWER_WALLET,
+      signature: '0xsignature',
+      nonce: 789,
+    })
+  })
+
+  test('low-level withdrawUsdc export sends the same request', async () => {
+    const transport = new MockTransport()
+
+    await withdrawUsdc({ transport }, {
+      wallet: WALLET,
+      account: LOWER_WALLET,
+      destination: DESTINATION_WALLET,
+      amount: '25.5',
+      nonce: 789,
+      signature: '0xsignature',
+    })
+
+    assert.equal(transport.calls.length, 1)
+    assert.equal(transport.calls[0].path, '/withdraw/usdc')
+    assert.equal(transport.calls[0].init.method, 'POST')
+  })
+
+  test('submitRfq sends the expected pre-signed request', async () => {
+    const response = {
+      rfq_id: '00000000-0000-0000-0000-000000000000',
+      status: 'sent_to_qps',
+      underlying: 'BTC',
+      legs: [{ instrument: 'BTC-30JUN26-100000-C', side: 'Buy', size: '0.1' }],
+      quotes: [],
+      created_at: 1,
+      expires_at: 2,
+    }
+    const { client, transport } = createClient(response)
+    const controller = new AbortController()
+
+    const result = await client.submitRfq(
+      {
+        rfq_id: '00000000-0000-0000-0000-000000000000',
+        legs: [{ instrument: 'BTC-30JUN26-100000-C', side: 'Buy', size: '0.1' }],
+        wallet_address: WALLET,
+        nonce: 123,
+        signature: '0xsignature',
+        auto_accept_limit: '10',
+      },
+      { signal: controller.signal },
+    )
+
+    assert.equal(result, response)
+    assert.equal(transport.calls.length, 1)
+
+    const call = transport.calls[0]
+    assert.equal(call.path, '/rfq/request')
+    assert.equal(call.signal, controller.signal)
+    assert.equal(call.init.method, 'POST')
+    assert.deepEqual(call.init.headers, {
+      'content-type': 'application/json',
+    })
+    assert.deepEqual(JSON.parse(call.init.body), {
+      rfq_id: '00000000-0000-0000-0000-000000000000',
+      legs: [{ instrument: 'BTC-30JUN26-100000-C', side: 'Buy', size: '0.1' }],
+      wallet_address: WALLET,
+      nonce: 123,
+      signature: '0xsignature',
+      auto_accept_limit: '10',
+    })
+  })
+
+  test('acceptRfqQuote sends the expected pre-signed request', async () => {
+    const response = {
+      rfq_id: '00000000-0000-0000-0000-000000000000',
+      quote_id: '11111111-1111-1111-1111-111111111111',
+      status: 'executed',
+      fill_id: 'fill-1',
+    }
+    const { client, transport } = createClient(response)
+
+    const result = await client.acceptRfqQuote({
+      rfq_id: '00000000-0000-0000-0000-000000000000',
+      quote_id: '11111111-1111-1111-1111-111111111111',
+      wallet_address: WALLET,
+      nonce: 124,
+      signature: '0xsignature',
+    })
+
+    assert.equal(result, response)
+    assert.equal(transport.calls.length, 1)
+
+    const call = transport.calls[0]
+    assert.equal(call.path, '/rfq/accept')
+    assert.equal(call.init.method, 'POST')
+    assert.deepEqual(call.init.headers, {
+      'content-type': 'application/json',
+    })
+    assert.deepEqual(JSON.parse(call.init.body), {
+      rfq_id: '00000000-0000-0000-0000-000000000000',
+      quote_id: '11111111-1111-1111-1111-111111111111',
+      wallet_address: WALLET,
+      nonce: 124,
+      signature: '0xsignature',
+    })
+  })
+
+  test('low-level RFQ exports send the same requests', async () => {
+    const transport = new MockTransport()
+
+    await submitRfq({ transport }, {
+      rfq_id: '00000000-0000-0000-0000-000000000000',
+      legs: [{ instrument: 'BTC-30JUN26-100000-C', side: 'Sell', size: '0.2' }],
+      wallet_address: WALLET,
+      nonce: 456,
+      signature: '0xsignature',
+    })
+
+    await acceptRfqQuote({ transport }, {
+      rfq_id: '00000000-0000-0000-0000-000000000000',
+      quote_id: '11111111-1111-1111-1111-111111111111',
+      wallet_address: WALLET,
+      nonce: 457,
+      signature: '0xsignature',
+    })
+
+    assert.equal(transport.calls.length, 2)
+    assert.equal(transport.calls[0].path, '/rfq/request')
+    assert.equal(transport.calls[0].init.method, 'POST')
+    assert.equal(transport.calls[1].path, '/rfq/accept')
+    assert.equal(transport.calls[1].init.method, 'POST')
+  })
+
+  test('submitStandardMarginLiquidation sends the expected pre-signed request', async () => {
+    const response = {
+      success: true,
+      data: {
+        request_id: '00000000-0000-0000-0000-000000000000',
+        auction_id: 'auction-1',
+        liquidated_wallet: LIQUIDATED_WALLET,
+        liquidator_wallet: LOWER_WALLET,
+      },
+      error: null,
+    }
+    const { client, transport } = createClient(response)
+    const controller = new AbortController()
+
+    const result = await client.submitStandardMarginLiquidation(
+      {
+        wallet: WALLET,
+        liquidated_wallet: LIQUIDATED_WALLET,
+        request_id: '00000000-0000-0000-0000-000000000000',
+        auction_id: 'auction-1',
+        bid_usdc: '100',
+        positions: [{ symbol: 'BTC-30JUN26-100000-C', quantity: '1', entry_price: '10' }],
+        portfolio_hash: '0xportfolio',
+        auction_terms_hash: '0xterms',
+        auction_version: 2,
+        valuation_timestamp_ms: 123456,
+        bid_intent_hash: 'intent-1',
+        nonce: 125,
+        signature: '0xsignature',
+      },
+      { signal: controller.signal },
+    )
+
+    assert.equal(result, response)
+    assert.equal(transport.calls.length, 1)
+
+    const call = transport.calls[0]
+    assert.equal(call.path, '/liquidation/standard-margin')
+    assert.equal(call.signal, controller.signal)
+    assert.equal(call.init.method, 'POST')
+    assert.deepEqual(call.init.headers, {
+      'content-type': 'application/json',
+    })
+    assert.deepEqual(JSON.parse(call.init.body), {
+      liquidated_wallet: LIQUIDATED_WALLET,
+      request_id: '00000000-0000-0000-0000-000000000000',
+      auction_id: 'auction-1',
+      bid_usdc: '100',
+      positions: [{ symbol: 'BTC-30JUN26-100000-C', quantity: '1', entry_price: '10' }],
+      portfolio_hash: '0xportfolio',
+      auction_terms_hash: '0xterms',
+      auction_version: 2,
+      valuation_timestamp_ms: 123456,
+      bid_intent_hash: 'intent-1',
+      wallet: LOWER_WALLET,
+      signature: '0xsignature',
+      nonce: 125,
+    })
+  })
+
+  test('low-level standard-margin liquidation export sends the same request', async () => {
+    const transport = new MockTransport()
+
+    await submitStandardMarginLiquidation({ transport }, {
+      wallet: WALLET,
+      liquidated_wallet: LIQUIDATED_WALLET,
+      request_id: '00000000-0000-0000-0000-000000000000',
+      auction_id: 'auction-1',
+      bid_usdc: '100',
+      positions: [{ symbol: 'BTC-30JUN26-100000-C', quantity: '1', entry_price: '10' }],
+      portfolio_hash: '0xportfolio',
+      auction_terms_hash: '0xterms',
+      auction_version: 2,
+      valuation_timestamp_ms: 123456,
+      bid_intent_hash: 'intent-1',
+      nonce: 125,
+      signature: '0xsignature',
+    })
+
+    assert.equal(transport.calls.length, 1)
+    assert.equal(transport.calls[0].path, '/liquidation/standard-margin')
+    assert.equal(transport.calls[0].init.method, 'POST')
   })
 
   test('validates parameters before sending a request', () => {
@@ -714,6 +1030,27 @@ describe('ExchangeClient', () => {
 
     assert.throws(
       () =>
+        client.bulkCancelOrdersByClientId({
+          cancels: [],
+        }),
+      ValidationError,
+    )
+
+    assert.throws(
+      () =>
+        client.bulkCancelOrdersByClientId({
+          cancels: Array.from({ length: 51 }, (_, index) => ({
+            wallet: WALLET,
+            client_id: `client-${index}`,
+            nonce: index + 1,
+            signature: '0xsignature',
+          })),
+        }),
+      ValidationError,
+    )
+
+    assert.throws(
+      () =>
         client.setSettlementPayoutsSeen({
           wallet: 'not-a-wallet',
           ids: [1],
@@ -740,6 +1077,75 @@ describe('ExchangeClient', () => {
           wallet: WALLET,
           ids: [1, 0],
           nonce: 1,
+          signature: '0xsignature',
+        }),
+      ValidationError,
+    )
+
+    assert.throws(
+      () =>
+        client.submitRfq({
+          rfq_id: '00000000-0000-0000-0000-000000000000',
+          legs: [],
+          wallet_address: WALLET,
+          nonce: 1,
+          signature: '0xsignature',
+        }),
+      ValidationError,
+    )
+
+    assert.throws(
+      () =>
+        client.withdrawUsdc({
+          wallet: WALLET,
+          account: 'not-a-wallet',
+          destination: DESTINATION_WALLET,
+          amount: '25.5',
+          nonce: 789,
+          signature: '0xsignature',
+        }),
+      ValidationError,
+    )
+
+    assert.throws(
+      () =>
+        client.submitRfq({
+          rfq_id: '00000000-0000-0000-0000-000000000000',
+          legs: [{ instrument: 'BTC-30JUN26-100000-C', side: 'buy', size: '0.1' }],
+          wallet_address: WALLET,
+          nonce: 1,
+          signature: '0xsignature',
+        }),
+      ValidationError,
+    )
+
+    assert.throws(
+      () =>
+        client.acceptRfqQuote({
+          rfq_id: '00000000-0000-0000-0000-000000000000',
+          quote_id: '',
+          wallet_address: WALLET,
+          nonce: 1,
+          signature: '0xsignature',
+        }),
+      ValidationError,
+    )
+
+    assert.throws(
+      () =>
+        client.submitStandardMarginLiquidation({
+          wallet: WALLET,
+          liquidated_wallet: LIQUIDATED_WALLET,
+          request_id: '00000000-0000-0000-0000-000000000000',
+          auction_id: 'auction-1',
+          bid_usdc: '100',
+          positions: [],
+          portfolio_hash: '0xportfolio',
+          auction_terms_hash: '0xterms',
+          auction_version: 2,
+          valuation_timestamp_ms: 123456,
+          bid_intent_hash: 'intent-1',
+          nonce: 125,
           signature: '0xsignature',
         }),
       ValidationError,

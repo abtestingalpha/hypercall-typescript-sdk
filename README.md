@@ -52,12 +52,27 @@ params come first, and the optional `AbortSignal` comes last.
 
 Focused runnable examples live in `examples/`:
 
+- `exchange-metadata.ts`
 - `read-markets.ts`
 - `read-wallet.ts`
+- `public-trades.ts`
+- `profile.ts`
 - `withdrawal-status.ts`
 - `rfq-status.ts`
 - `historical-theos.ts`
 - `liquidations.ts`
+- `signing.ts`
+- `pre-signed-writes.ts`
+
+The read examples call live API endpoints. `signing.ts` and
+`pre-signed-writes.ts` are request-shape examples and do not submit write
+actions by default.
+
+Run an example with:
+
+```bash
+corepack pnpm example examples/read-markets.ts
+```
 
 ```ts
 import { HttpTransport, InfoClient } from '@hypercall/sdk'
@@ -80,6 +95,11 @@ console.log(summaries.result?.[0]?.instrument_name)
 Exchange methods mutate state and currently accept pre-signed request payloads.
 The SDK submits and validates the request shape, while the caller owns wallet
 connection, nonce selection, and EIP-712 signing.
+
+Place order note: `buildPlaceOrderValue(...)` matches the frontend legacy
+`PlaceOrder` signature, which does not include `route`. Do not send `route` with
+that signature. To send `route`, sign with `PLACE_ORDER_WITH_ROUTE_TYPES` and
+`buildPlaceOrderWithRouteValue(...)`.
 
 ```ts
 import { ExchangeClient, HttpTransport } from '@hypercall/sdk'
@@ -163,10 +183,31 @@ const canceled = await exchange.cancelOrder({
 console.log(canceled.success)
 ```
 
+```ts
+const bulkCanceled = await exchange.bulkCancelOrdersByClientId({
+  cancels: [{
+    wallet: '0x0000000000000000000000000000000000000000',
+    client_id: 'client-123',
+    nonce: 6,
+    signature: '0x...',
+  }],
+})
+
+console.log(bulkCanceled.results[0]?.success)
+```
+
 ## Signing Helpers
 
-The signing subpath exposes the same EIP-712 maps and value builders used by
-the frontend. Pass the chain id from your app environment.
+The signing subpath exposes EIP-712 maps and value builders for public SDK
+write actions. Product-local profile, username, and notification helpers live
+in the Hypercall frontend instead of this package. Pass the chain id from your
+app environment.
+
+`PLACE_ORDER_TYPES` and `buildPlaceOrderValue(...)` intentionally produce the
+current frontend legacy no-route `PlaceOrder` payload. If a request includes
+`route`, the backend expects the signature to include `route` too. Use
+`PLACE_ORDER_WITH_ROUTE_TYPES` and `buildPlaceOrderWithRouteValue(...)` for that
+route-aware payload.
 
 ```ts
 import {
@@ -188,6 +229,35 @@ const typedData = buildTypedData({
 })
 
 console.log(typedData.primaryType)
+```
+
+```ts
+import {
+  PLACE_ORDER_WITH_ROUTE_TYPES,
+  buildPlaceOrderWithRouteValue,
+  buildTypedData,
+} from '@hypercall/sdk/signing'
+
+const routeAwareOrder = buildPlaceOrderWithRouteValue({
+  wallet: '0x0000000000000000000000000000000000000000',
+  symbol: 'BTC-30JUN26-100000-C',
+  side: 'Buy',
+  size: '0.1',
+  price: '100',
+  tif: 'gtc',
+  route: 'book_only',
+  clientId: 'client-123',
+  nonce: 2,
+})
+
+const routeAwareTypedData = buildTypedData({
+  chainId: 999,
+  primaryType: 'PlaceOrder',
+  types: PLACE_ORDER_WITH_ROUTE_TYPES,
+  message: routeAwareOrder,
+})
+
+console.log(routeAwareTypedData.message.route)
 ```
 
 ### Exchange Metadata
@@ -256,6 +326,33 @@ console.log(portfolio.data?.available_balance)
 console.log(portfolio.data?.positions[0]?.symbol)
 ```
 
+### Profile
+
+```ts
+const profile = await info.profile({
+  wallet: '0xe55b5e5e38f73c30aa367d310d6247f3f9a5e86e',
+})
+
+console.log(profile.data.username)
+console.log(profile.data.pnl.unrealized)
+
+const profileTrades = await info.profileTrades({
+  wallet: '0xe55b5e5e38f73c30aa367d310d6247f3f9a5e86e',
+  limit: 25,
+  offset: 0,
+})
+
+console.log(profileTrades.data[0]?.trade_id)
+console.log(profileTrades.data[0]?.realized_pnl)
+
+const realizedPnl = await info.profileRealizedPnl({
+  wallet: '0xe55b5e5e38f73c30aa367d310d6247f3f9a5e86e',
+})
+
+console.log(realizedPnl.data[0]?.symbol)
+console.log(realizedPnl.data[0]?.realized_pnl)
+```
+
 ### Orders
 
 ```ts
@@ -278,6 +375,28 @@ const fills = await info.fills({
 
 console.log(fills.data[0]?.fill_id)
 console.log(fills.data[0]?.side)
+```
+
+### Public Trades
+
+```ts
+const trades = await info.trades({
+  underlying: 'BTC',
+  limit: 25,
+  offset: 0,
+})
+
+console.log(trades.data[0]?.trade_id)
+console.log(trades.data[0]?.price)
+
+const accountTrades = await info.trades({
+  account: '0xe55b5e5e38f73c30aa367d310d6247f3f9a5e86e',
+  limit: 25,
+  offset: 0,
+})
+
+console.log(accountTrades.data[0]?.maker_address)
+console.log(accountTrades.data[0]?.taker_address)
 ```
 
 ### Settlement Payouts and Authorized Agents
@@ -415,13 +534,14 @@ Different Hypercall endpoints return different envelope shapes. Keep the
 envelope when typing app code instead of assuming every endpoint returns a raw
 array.
 
-- **REST list envelopes:** `markets`, `orders`, `fills`, `settlementPayouts`,
-  `liquidationHistory`, and `liquidations` return `{ success, data }`.
-  `orders`, `fills`, `settlementPayouts`, and `liquidationHistory` also include
+- **REST list envelopes:** `markets`, `orders`, `fills`, `trades`,
+  `profileTrades`, `settlementPayouts`, `liquidationHistory`, and
+  `liquidations` return `{ success, data }`. `orders`, `fills`, `trades`,
+  `profileTrades`, `settlementPayouts`, and `liquidationHistory` also include
   `pagination`. `liquidations` includes cursor pagination in `page`.
 - **JSON-RPC envelopes:** `instruments`, `optionSummaries`, and `orderbook`
   return `{ jsonrpc, result, error, testnet, usDiff, usIn, usOut }`.
-- **API success envelope:** `portfolio`, `historicalTheos`,
+- **API success envelope:** `portfolio`, `profile`, `historicalTheos`,
   `historicalTheosBatch`, `historicalPnl`, and `liquidationStatus` return
   `{ success, data, error }`.
 - **Authorized agents and withdrawals:** `authorizedAgents` returns `{ agents }`;
@@ -465,10 +585,18 @@ import type {
   OrderBook,
   Portfolio,
   PortfolioResponse,
+  ProfileData,
+  ProfileResponse,
+  ProfileTrade,
+  ProfileTradesResponse,
+  RealizedPnlResponse,
+  RealizedPnlRow,
   RfqQuote,
   RfqStatusResponse,
   SettlementPayout,
   SettlementPayoutsResponse,
+  Trade,
+  TradesResponse,
   WithdrawalHistoryResponse,
 } from '@hypercall/sdk'
 ```
@@ -484,8 +612,12 @@ import type {
 | `info.optionSummaries(params)` | `{ currency, kind?, expiry? }` | `OptionSummariesResponse` |
 | `info.orderbook(params)` | `{ instrumentId, depth? }` | `OrderbookResponse` |
 | `info.portfolio(params)` | `{ wallet }` | `PortfolioResponse` |
+| `info.profile(params)` | `{ wallet }` | `ProfileResponse` |
+| `info.profileTrades(params)` | `{ wallet, limit?, offset?, competition_id?, from_ts_ms?, to_ts_ms?, symbol? }` | `ProfileTradesResponse` |
+| `info.profileRealizedPnl(params)` | `{ wallet, competition_id? }` | `RealizedPnlResponse` |
 | `info.orders(params)` | `{ wallet, limit?, offset?, status? }` | `OrdersResponse` |
 | `info.fills(params)` | `{ wallet, limit?, offset? }` | `FillsResponse` |
+| `info.trades(params)` | `{ limit?, offset? }`, `{ symbol, limit? }`, `{ underlying, limit?, offset? }`, or `{ account, limit?, offset? }` | `TradesResponse` |
 | `info.settlementPayouts(params)` | `{ wallet, limit?, offset?, symbol?, ledgerApplied? }` | `SettlementPayoutsResponse` |
 | `info.authorizedAgents(params)` | `{ wallet }` | `AuthorizedAgentsResponse` |
 | `info.directiveStatus(params)` | `{ directiveId }` | `DirectiveStatusResponse` |
@@ -506,6 +638,7 @@ Hypercall API docs: https://docs.hypercall.xyz/docs/trading/over-api/
 corepack pnpm install
 corepack pnpm typecheck
 corepack pnpm test
+corepack pnpm example examples/read-markets.ts
 corepack pnpm dev
 ```
 

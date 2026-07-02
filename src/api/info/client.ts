@@ -57,6 +57,17 @@ import { orderbook, type OrderbookParameters, type OrderbookResponse } from './_
 import { orders, type OrdersParameters, type OrdersResponse } from './_methods/orders.ts'
 import { portfolio, type PortfolioParameters, type PortfolioResponse } from './_methods/portfolio.ts'
 import {
+  profile,
+  profileRealizedPnl,
+  profileTrades,
+  type ProfileParameters,
+  type ProfileRealizedPnlParameters,
+  type ProfileTradesParameters,
+  type ProfileResponse,
+  type ProfileTradesResponse,
+  type RealizedPnlResponse,
+} from './_methods/profile.ts'
+import {
   rfqStatus,
   type RfqStatusParameters,
   type RfqStatusResponse,
@@ -66,6 +77,7 @@ import {
   type SettlementPayoutsParameters,
   type SettlementPayoutsResponse,
 } from './_methods/settlementPayouts.ts'
+import { trades, type TradesParameters, type TradesResponse } from './_methods/trades.ts'
 
 /** A client for interacting with the Hypercall Info API. */
 export class InfoClient<C extends InfoConfig = InfoConfig> {
@@ -255,6 +267,101 @@ export class InfoClient<C extends InfoConfig = InfoConfig> {
   }
 
   /**
+   * Request profile stats for a wallet.
+   *
+   * @param params Parameters specific to the API request.
+   * @param signal {@link https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal | AbortSignal} to cancel the request.
+   * @return Profile response.
+   *
+   * @throws {ValidationError} When the request parameters fail validation (before sending).
+   * @throws {TransportError} When the transport layer throws an error.
+   *
+   * @example
+   * ```ts
+   * import { HttpTransport, InfoClient } from "@hypercall/sdk";
+   *
+   * const transport = new HttpTransport({ apiUrl: "https://api.hypercall.xyz" });
+   * const client = new InfoClient({ transport });
+   *
+   * const data = await client.profile({
+   *   wallet: "0x0000000000000000000000000000000000000000",
+   * });
+   * ```
+   *
+   * @see https://docs.hypercall.xyz/docs/trading/over-api/
+   */
+  profile(
+    params: ProfileParameters,
+    signal?: AbortSignal,
+  ): Promise<ProfileResponse> {
+    return profile(this.config_, params, signal)
+  }
+
+  /**
+   * Request profile trade history for a wallet.
+   *
+   * @param params Parameters specific to the API request.
+   * @param signal {@link https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal | AbortSignal} to cancel the request.
+   * @return Profile trade history response.
+   *
+   * @throws {ValidationError} When the request parameters fail validation (before sending).
+   * @throws {TransportError} When the transport layer throws an error.
+   *
+   * @example
+   * ```ts
+   * import { HttpTransport, InfoClient } from "@hypercall/sdk";
+   *
+   * const transport = new HttpTransport({ apiUrl: "https://api.hypercall.xyz" });
+   * const client = new InfoClient({ transport });
+   *
+   * const data = await client.profileTrades({
+   *   wallet: "0x0000000000000000000000000000000000000000",
+   *   limit: 25,
+   *   offset: 0,
+   * });
+   * ```
+   *
+   * @see https://docs.hypercall.xyz/docs/trading/over-api/
+   */
+  profileTrades(
+    params: ProfileTradesParameters,
+    signal?: AbortSignal,
+  ): Promise<ProfileTradesResponse> {
+    return profileTrades(this.config_, params, signal)
+  }
+
+  /**
+   * Request realized PnL by symbol for a wallet.
+   *
+   * @param params Parameters specific to the API request.
+   * @param signal {@link https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal | AbortSignal} to cancel the request.
+   * @return Realized PnL by symbol response.
+   *
+   * @throws {ValidationError} When the request parameters fail validation (before sending).
+   * @throws {TransportError} When the transport layer throws an error.
+   *
+   * @example
+   * ```ts
+   * import { HttpTransport, InfoClient } from "@hypercall/sdk";
+   *
+   * const transport = new HttpTransport({ apiUrl: "https://api.hypercall.xyz" });
+   * const client = new InfoClient({ transport });
+   *
+   * const data = await client.profileRealizedPnl({
+   *   wallet: "0x0000000000000000000000000000000000000000",
+   * });
+   * ```
+   *
+   * @see https://docs.hypercall.xyz/docs/trading/over-api/
+   */
+  profileRealizedPnl(
+    params: ProfileRealizedPnlParameters,
+    signal?: AbortSignal,
+  ): Promise<RealizedPnlResponse> {
+    return profileRealizedPnl(this.config_, params, signal)
+  }
+
+  /**
    * Request orders for a wallet.
    *
    * @param params Parameters specific to the API request.
@@ -316,6 +423,39 @@ export class InfoClient<C extends InfoConfig = InfoConfig> {
     signal?: AbortSignal,
   ): Promise<FillsResponse> {
     return fills(this.config_, params, signal)
+  }
+
+  /**
+   * Request public venue trades.
+   *
+   * @param params Parameters specific to the API request.
+   * @param signal {@link https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal | AbortSignal} to cancel the request.
+   * @return Public venue trades response.
+   *
+   * @throws {ValidationError} When the request parameters fail validation (before sending).
+   * @throws {TransportError} When the transport layer throws an error.
+   *
+   * @example
+   * ```ts
+   * import { HttpTransport, InfoClient } from "@hypercall/sdk";
+   *
+   * const transport = new HttpTransport({ apiUrl: "https://api.hypercall.xyz" });
+   * const client = new InfoClient({ transport });
+   *
+   * const data = await client.trades({
+   *   underlying: "BTC",
+   *   limit: 50,
+   *   offset: 0,
+   * });
+   * ```
+   *
+   * @see https://docs.hypercall.xyz/docs/trading/over-api/
+   */
+  trades(
+    params: TradesParameters = {},
+    signal?: AbortSignal,
+  ): Promise<TradesResponse> {
+    return trades(this.config_, params, signal)
   }
 
   /**
@@ -786,6 +926,25 @@ export type {
   SpanMarginSummary,
 } from './_methods/portfolio.ts'
 export type {
+  MedalCode,
+  ProfileCompetitionRankSummary,
+  ProfileData,
+  ProfileMarginStats,
+  ProfileMetricMedals,
+  ProfileParameters,
+  ProfilePnlStats,
+  ProfileRealizedPnlParameters,
+  ProfileRealizedPnlRequest,
+  ProfileRequest,
+  ProfileResponse,
+  ProfileTrade,
+  ProfileTradesParameters,
+  ProfileTradesRequest,
+  ProfileTradesResponse,
+  RealizedPnlResponse,
+  RealizedPnlRow,
+} from './_methods/profile.ts'
+export type {
   RfqLeg,
   RfqQuote,
   RfqQuoteLeg,
@@ -800,3 +959,13 @@ export type {
   SettlementPayoutsRequest,
   SettlementPayoutsResponse,
 } from './_methods/settlementPayouts.ts'
+export type {
+  AccountTradesParameters,
+  AllTradesParameters,
+  SymbolTradesParameters,
+  Trade,
+  TradesParameters,
+  TradesRequest,
+  TradesResponse,
+  UnderlyingTradesParameters,
+} from './_methods/trades.ts'

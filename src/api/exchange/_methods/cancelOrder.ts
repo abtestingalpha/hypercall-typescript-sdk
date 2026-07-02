@@ -17,8 +17,6 @@ export const CancelOrderRequest = v.pipe(
     nonce: v.pipe(NonNegativeInteger, v.description('Signature nonce.')),
     /** EIP-712 signature. */
     signature: v.pipe(NonEmptyString, v.description('EIP-712 signature.')),
-    /** Optional authorized agent signer address. */
-    signer: v.pipe(v.optional(WalletAddress), v.description('Authorized signer address.')),
   }),
   v.description('Pre-signed request to cancel an order by order ID.'),
 )

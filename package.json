@@ -38,6 +38,7 @@
   "scripts": {
     "build": "node -e \"require('node:fs').rmSync('dist', { recursive: true, force: true })\" && tsc -p tsconfig.build.json",
     "dev": "tsc -p tsconfig.build.json --watch --preserveWatchOutput",
+    "example": "tsx --tsconfig tsconfig.examples.json",
     "test": "pnpm build && node --test",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.examples.json --noEmit"
   },
@@ -45,7 +46,9 @@
     "@valibot/valibot": "npm:valibot@1.1.0"
   },
   "devDependencies": {
-    "typescript": "^5.9.3"
+    "tsx": "^4.22.4",
+    "typescript": "^5.9.3",
+    "viem": "^2.43.1"
   },
   "packageManager": "pnpm@10.0.0"
 }

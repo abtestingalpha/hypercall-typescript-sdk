@@ -5,6 +5,12 @@
 
 import type { ExchangeConfig } from './_methods/_base/mod.ts'
 import {
+  acceptRfqQuote,
+  type AcceptRfqQuoteOptions,
+  type AcceptRfqQuoteParameters,
+  type AcceptRfqQuoteResponse,
+} from './_methods/acceptRfqQuote.ts'
+import {
   approveAgent,
   type ApproveAgentOptions,
   type ApproveAgentParameters,
@@ -16,6 +22,12 @@ import {
   type BulkCancelOrdersParameters,
   type BulkCancelOrdersResponse,
 } from './_methods/bulkCancelOrders.ts'
+import {
+  bulkCancelOrdersByClientId,
+  type BulkCancelOrdersByClientIdOptions,
+  type BulkCancelOrdersByClientIdParameters,
+  type BulkCancelOrdersByClientIdResponse,
+} from './_methods/bulkCancelOrdersByClientId.ts'
 import {
   cancelOrder,
   type CancelOrderOptions,
@@ -58,6 +70,24 @@ import {
   type SetSettlementPayoutsSeenParameters,
   type SetSettlementPayoutsSeenResponse,
 } from './_methods/setSettlementPayoutsSeen.ts'
+import {
+  submitStandardMarginLiquidation,
+  type SubmitStandardMarginLiquidationOptions,
+  type SubmitStandardMarginLiquidationParameters,
+  type SubmitStandardMarginLiquidationResponse,
+} from './_methods/submitStandardMarginLiquidation.ts'
+import {
+  submitRfq,
+  type SubmitRfqOptions,
+  type SubmitRfqParameters,
+  type SubmitRfqResponse,
+} from './_methods/submitRfq.ts'
+import {
+  withdrawUsdc,
+  type WithdrawUsdcOptions,
+  type WithdrawUsdcParameters,
+  type WithdrawUsdcResponse,
+} from './_methods/withdrawUsdc.ts'
 
 /** A client for interacting with signed Hypercall Exchange API methods. */
 export class ExchangeClient<C extends ExchangeConfig = ExchangeConfig> {
@@ -204,6 +234,44 @@ export class ExchangeClient<C extends ExchangeConfig = ExchangeConfig> {
     opts?: BulkCancelOrdersOptions,
   ): Promise<BulkCancelOrdersResponse> {
     return bulkCancelOrders(this.config_, params, opts)
+  }
+
+  /**
+   * Cancel multiple orders by client ID using pre-signed Hypercall EIP-712 payloads.
+   *
+   * Signing: pre-signed EIP-712 `CancelOrderByClientId` payloads.
+   *
+   * @param params Pre-signed parameters specific to the API request.
+   * @param opts Request execution options.
+   * @return Bulk cancel response.
+   *
+   * @throws {ValidationError} When the request parameters fail validation (before sending).
+   * @throws {TransportError} When the transport layer throws an error.
+   *
+   * @example
+   * ```ts
+   * import { ExchangeClient, HttpTransport } from "@hypercall/sdk";
+   *
+   * const transport = new HttpTransport({ apiUrl: "https://api.hypercall.xyz" });
+   * const client = new ExchangeClient({ transport });
+   *
+   * const data = await client.bulkCancelOrdersByClientId({
+   *   cancels: [{
+   *     wallet: "0x0000000000000000000000000000000000000000",
+   *     client_id: "client-123",
+   *     nonce: 1,
+   *     signature: "0x...",
+   *   }],
+   * });
+   * ```
+   *
+   * @see https://docs.hypercall.xyz/docs/trading/over-api/
+   */
+  bulkCancelOrdersByClientId(
+    params: BulkCancelOrdersByClientIdParameters,
+    opts?: BulkCancelOrdersByClientIdOptions,
+  ): Promise<BulkCancelOrdersByClientIdResponse> {
+    return bulkCancelOrdersByClientId(this.config_, params, opts)
   }
 
   /**
@@ -383,10 +451,168 @@ export class ExchangeClient<C extends ExchangeConfig = ExchangeConfig> {
   ): Promise<SetSettlementPayoutsSeenResponse> {
     return setSettlementPayoutsSeen(this.config_, params, opts)
   }
+
+  /**
+   * Withdraw USDC from Hypercall to Hyperliquid using an owner-signed payload.
+   *
+   * Signing: pre-signed EIP-712 `WithdrawUsdc` payload. The backend rejects
+   * authorized-agent signatures for this endpoint.
+   *
+   * @param params Owner-signed parameters specific to the API request.
+   * @param opts Request execution options.
+   * @return USDC withdrawal submit response.
+   *
+   * @throws {ValidationError} When the request parameters fail validation (before sending).
+   * @throws {TransportError} When the transport layer throws an error.
+   *
+   * @example
+   * ```ts
+   * import { ExchangeClient, HttpTransport } from "@hypercall/sdk";
+   *
+   * const transport = new HttpTransport({ apiUrl: "https://api.hypercall.xyz" });
+   * const client = new ExchangeClient({ transport });
+   *
+   * const data = await client.withdrawUsdc({
+   *   wallet: "0x0000000000000000000000000000000000000000",
+   *   account: "0x0000000000000000000000000000000000000000",
+   *   destination: "0x0000000000000000000000000000000000000000",
+   *   amount: "100",
+   *   nonce: 1,
+   *   signature: "0x...",
+   * });
+   * ```
+   *
+   * @see https://docs.hypercall.xyz/docs/trading/over-api/
+   */
+  withdrawUsdc(params: WithdrawUsdcParameters, opts?: WithdrawUsdcOptions): Promise<WithdrawUsdcResponse> {
+    return withdrawUsdc(this.config_, params, opts)
+  }
+
+  /**
+   * Submit an RFQ using a pre-signed Hypercall EIP-712 payload.
+   *
+   * Signing: pre-signed EIP-712 `SubmitRFQ` or `SubmitAutoExecuteRfq` payload.
+   *
+   * @param params Pre-signed parameters specific to the API request.
+   * @param opts Request execution options.
+   * @return RFQ status response.
+   *
+   * @throws {ValidationError} When the request parameters fail validation (before sending).
+   * @throws {TransportError} When the transport layer throws an error.
+   *
+   * @example
+   * ```ts
+   * import { ExchangeClient, HttpTransport } from "@hypercall/sdk";
+   *
+   * const transport = new HttpTransport({ apiUrl: "https://api.hypercall.xyz" });
+   * const client = new ExchangeClient({ transport });
+   *
+   * const data = await client.submitRfq({
+   *   rfq_id: "00000000-0000-0000-0000-000000000000",
+   *   legs: [{ instrument: "BTC-30JUN26-100000-C", side: "Buy", size: "0.1" }],
+   *   wallet_address: "0x0000000000000000000000000000000000000000",
+   *   nonce: 1,
+   *   signature: "0x...",
+   * });
+   * ```
+   *
+   * @see https://docs.hypercall.xyz/docs/trading/over-api/
+   */
+  submitRfq(params: SubmitRfqParameters, opts?: SubmitRfqOptions): Promise<SubmitRfqResponse> {
+    return submitRfq(this.config_, params, opts)
+  }
+
+  /**
+   * Accept an RFQ quote using a pre-signed Hypercall EIP-712 payload.
+   *
+   * Signing: pre-signed EIP-712 `AcceptRFQQuote` payload.
+   *
+   * @param params Pre-signed parameters specific to the API request.
+   * @param opts Request execution options.
+   * @return RFQ accept response.
+   *
+   * @throws {ValidationError} When the request parameters fail validation (before sending).
+   * @throws {TransportError} When the transport layer throws an error.
+   *
+   * @example
+   * ```ts
+   * import { ExchangeClient, HttpTransport } from "@hypercall/sdk";
+   *
+   * const transport = new HttpTransport({ apiUrl: "https://api.hypercall.xyz" });
+   * const client = new ExchangeClient({ transport });
+   *
+   * const data = await client.acceptRfqQuote({
+   *   rfq_id: "00000000-0000-0000-0000-000000000000",
+   *   quote_id: "11111111-1111-1111-1111-111111111111",
+   *   wallet_address: "0x0000000000000000000000000000000000000000",
+   *   nonce: 1,
+   *   signature: "0x...",
+   * });
+   * ```
+   *
+   * @see https://docs.hypercall.xyz/docs/trading/over-api/
+   */
+  acceptRfqQuote(
+    params: AcceptRfqQuoteParameters,
+    opts?: AcceptRfqQuoteOptions,
+  ): Promise<AcceptRfqQuoteResponse> {
+    return acceptRfqQuote(this.config_, params, opts)
+  }
+
+  /**
+   * Submit a standard-margin liquidation bid using a pre-signed Hypercall EIP-712 payload.
+   *
+   * Signing: pre-signed EIP-712 `StandardMarginLiquidationOrder` payload.
+   *
+   * @param params Pre-signed parameters specific to the API request.
+   * @param opts Request execution options.
+   * @return Standard-margin liquidation submit response.
+   *
+   * @throws {ValidationError} When the request parameters fail validation (before sending).
+   * @throws {TransportError} When the transport layer throws an error.
+   *
+   * @example
+   * ```ts
+   * import { ExchangeClient, HttpTransport } from "@hypercall/sdk";
+   *
+   * const transport = new HttpTransport({ apiUrl: "https://api.hypercall.xyz" });
+   * const client = new ExchangeClient({ transport });
+   *
+   * const data = await client.submitStandardMarginLiquidation({
+   *   wallet: "0x0000000000000000000000000000000000000000",
+   *   liquidated_wallet: "0x1111111111111111111111111111111111111111",
+   *   request_id: "00000000-0000-0000-0000-000000000000",
+   *   auction_id: "auction-1",
+   *   bid_usdc: "100",
+   *   positions: [{ symbol: "BTC-30JUN26-100000-C", quantity: "1", entry_price: "10" }],
+   *   portfolio_hash: "0xportfolio",
+   *   auction_terms_hash: "0xterms",
+   *   auction_version: 1,
+   *   valuation_timestamp_ms: 1,
+   *   bid_intent_hash: "intent-1",
+   *   nonce: 1,
+   *   signature: "0x...",
+   * });
+   * ```
+   *
+   * @see https://docs.hypercall.xyz/docs/trading/over-api/
+   */
+  submitStandardMarginLiquidation(
+    params: SubmitStandardMarginLiquidationParameters,
+    opts?: SubmitStandardMarginLiquidationOptions,
+  ): Promise<SubmitStandardMarginLiquidationResponse> {
+    return submitStandardMarginLiquidation(this.config_, params, opts)
+  }
 }
 
 export type { ExchangeConfig, ExchangeRequestOptions } from './_methods/_base/mod.ts'
 export type { OrderUpdateInfo, OrderUpdateMessage } from './_methods/_base/order.ts'
+export type {
+  AcceptRfqQuoteOptions,
+  AcceptRfqQuoteParameters,
+  AcceptRfqQuoteRequest,
+  AcceptRfqQuoteResponse,
+} from './_methods/acceptRfqQuote.ts'
 export type {
   ApproveAgentOptions,
   ApproveAgentParameters,
@@ -400,6 +626,12 @@ export type {
   BulkCancelOrdersRequest,
   BulkCancelOrdersResponse,
 } from './_methods/bulkCancelOrders.ts'
+export type {
+  BulkCancelOrdersByClientIdOptions,
+  BulkCancelOrdersByClientIdParameters,
+  BulkCancelOrdersByClientIdRequest,
+  BulkCancelOrdersByClientIdResponse,
+} from './_methods/bulkCancelOrdersByClientId.ts'
 export type {
   CancelOrderOptions,
   CancelOrderParameters,
@@ -444,3 +676,24 @@ export type {
   SetSettlementPayoutsSeenRequest,
   SetSettlementPayoutsSeenResponse,
 } from './_methods/setSettlementPayoutsSeen.ts'
+export type {
+  StandardMarginLiquidationOrderResponse,
+  StandardMarginLiquidationPositionRequest,
+  SubmitStandardMarginLiquidationOptions,
+  SubmitStandardMarginLiquidationParameters,
+  SubmitStandardMarginLiquidationRequest,
+  SubmitStandardMarginLiquidationResponse,
+} from './_methods/submitStandardMarginLiquidation.ts'
+export type {
+  SubmitRfqLeg,
+  SubmitRfqOptions,
+  SubmitRfqParameters,
+  SubmitRfqRequest,
+  SubmitRfqResponse,
+} from './_methods/submitRfq.ts'
+export type {
+  WithdrawUsdcOptions,
+  WithdrawUsdcParameters,
+  WithdrawUsdcRequest,
+  WithdrawUsdcResponse,
+} from './_methods/withdrawUsdc.ts'

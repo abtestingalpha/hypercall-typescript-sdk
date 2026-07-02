@@ -66,6 +66,31 @@ describe('InfoClient', () => {
       path: `/portfolio?wallet=${LOWER_WALLET}`,
     },
     {
+      name: 'profile',
+      call: (client, signal) => client.profile({ wallet: WALLET }, signal),
+      path: `/profile?wallet=${LOWER_WALLET}`,
+    },
+    {
+      name: 'profileTrades',
+      call: (client, signal) =>
+        client.profileTrades({
+          wallet: WALLET,
+          limit: 25,
+          offset: 0,
+          competition_id: 12,
+          from_ts_ms: 1_700_000_000_000,
+          to_ts_ms: 1_700_086_400_000,
+          symbol: 'SPCX-20261231-10-C',
+        }, signal),
+      path:
+        `/profile/trades?wallet=${LOWER_WALLET}&limit=25&offset=0&competition_id=12&from_ts_ms=1700000000000&to_ts_ms=1700086400000&symbol=SPCX-20261231-10-C`,
+    },
+    {
+      name: 'profileRealizedPnl',
+      call: (client, signal) => client.profileRealizedPnl({ wallet: WALLET, competition_id: 12 }, signal),
+      path: `/profile/realized-pnl?wallet=${LOWER_WALLET}&competition_id=12`,
+    },
+    {
       name: 'orders',
       call: (client, signal) => client.orders({ wallet: WALLET, limit: 25, offset: 0, status: 'open' }, signal),
       path: `/orders?wallet=${LOWER_WALLET}&limit=25&offset=0&status=open`,
@@ -74,6 +99,26 @@ describe('InfoClient', () => {
       name: 'fills',
       call: (client, signal) => client.fills({ wallet: WALLET, limit: 25, offset: 0 }, signal),
       path: `/fills?wallet=${LOWER_WALLET}&limit=25&offset=0`,
+    },
+    {
+      name: 'trades',
+      call: (client, signal) => client.trades({ limit: 25, offset: 0 }, signal),
+      path: '/trades?limit=25&offset=0',
+    },
+    {
+      name: 'trades by symbol',
+      call: (client, signal) => client.trades({ symbol: 'SPCX-20261231-10-C', limit: 25 }, signal),
+      path: '/trades?limit=25&symbol=SPCX-20261231-10-C',
+    },
+    {
+      name: 'trades by underlying',
+      call: (client, signal) => client.trades({ underlying: 'SPCX', limit: 25, offset: 0 }, signal),
+      path: '/trades?limit=25&offset=0&underlying=SPCX',
+    },
+    {
+      name: 'trades by account',
+      call: (client, signal) => client.trades({ account: WALLET, limit: 25, offset: 0 }, signal),
+      path: `/trades?limit=25&offset=0&account=${LOWER_WALLET}`,
     },
     {
       name: 'historicalPnl',
@@ -192,6 +237,37 @@ describe('InfoClient', () => {
 
     assert.throws(
       () => client.portfolio({ wallet: 'not-a-wallet' }),
+      ValidationError,
+    )
+    assert.throws(
+      () => client.profile({ wallet: 'not-a-wallet' }),
+      ValidationError,
+    )
+    assert.throws(
+      () => client.profileTrades({ wallet: WALLET, offset: -1 }),
+      ValidationError,
+    )
+    assert.throws(
+      () => client.profileRealizedPnl({ wallet: WALLET, competition_id: 0 }),
+      ValidationError,
+    )
+
+    assert.deepEqual(transport.calls, [])
+  })
+
+  test('validates mutually exclusive trades filters before sending a request', async () => {
+    const { client, transport } = createClient()
+
+    assert.throws(
+      () => client.trades({ symbol: 'SPCX-20261231-10-C', underlying: 'SPCX' }),
+      ValidationError,
+    )
+    assert.throws(
+      () => client.trades({ symbol: 'SPCX-20261231-10-C', offset: 0 }),
+      ValidationError,
+    )
+    assert.throws(
+      () => client.trades({ account: 'not-a-wallet' }),
       ValidationError,
     )
 

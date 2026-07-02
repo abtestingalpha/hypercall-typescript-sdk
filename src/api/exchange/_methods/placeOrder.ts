@@ -29,8 +29,6 @@ export const PlaceOrderRequest = v.pipe(
     nonce: v.pipe(NonNegativeInteger, v.description('Signature nonce.')),
     /** EIP-712 signature. */
     signature: v.pipe(NonEmptyString, v.description('EIP-712 signature.')),
-    /** Optional authorized agent signer address. */
-    signer: v.pipe(v.optional(WalletAddress), v.description('Authorized signer address.')),
     /** Optional market-maker protection flag. */
     mmp_enabled: v.pipe(v.optional(v.boolean()), v.description('Market-maker protection flag.')),
     /** Optional builder code address. */
@@ -56,6 +54,10 @@ export type PlaceOrderOptions = ExchangeRequestOptions
  * Place an order using a pre-signed Hypercall EIP-712 payload.
  *
  * Signing: pre-signed EIP-712 `PlaceOrder` payload.
+ * The legacy `buildPlaceOrderValue(...)` helper produces a no-route
+ * PlaceOrder signature. Only send `route` when the signature was produced with
+ * route-aware typed data, such as `buildPlaceOrderWithRouteValue(...)` from
+ * `@hypercall/sdk/signing`.
  *
  * @param config General configuration for Exchange API requests.
  * @param params Pre-signed parameters specific to the API request.
