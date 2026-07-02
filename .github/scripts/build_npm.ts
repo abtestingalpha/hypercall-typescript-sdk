@@ -43,8 +43,8 @@ async function existingFiles(paths: string[]): Promise<string[]> {
 if (import.meta.main) {
   const publishManifest = structuredClone(denoJson) as DenoJson;
 
-  publishManifest.name = env("HYPERCALL_NPM_PACKAGE_NAME") ?? publishManifest.name;
-  publishManifest.version = env("HYPERCALL_NPM_VERSION") ?? publishManifest.version;
+  publishManifest.name = env("NPM_PACKAGE_NAME") ?? publishManifest.name;
+  publishManifest.version = env("NPM_VERSION") ?? publishManifest.version;
 
   await Deno.remove("dist", { recursive: true }).catch((error) => {
     if (!(error instanceof Deno.errors.NotFound)) throw error;
