@@ -6,5 +6,5 @@
  * @module
  */
 
-export * from './_base.ts'
-export * from './http/mod.ts'
+export * from "./_base.ts";
+export * from "./http/mod.ts";

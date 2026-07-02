@@ -1,9 +1,9 @@
-import * as v from '@valibot/valibot'
+import * as v from "@valibot/valibot";
 
-import { NonEmptyString, NonNegativeInteger, parse, WalletAddress } from '../../_base.ts'
-import type { RfqStatusResponse } from '../../info/_methods/rfq.ts'
-import { OrderSide } from './_base/order.ts'
-import type { ExchangeConfig, ExchangeRequestOptions } from './_base/mod.ts'
+import { NonEmptyString, NonNegativeInteger, parse, WalletAddress } from "../../_base.ts";
+import type { RfqStatusResponse } from "../../info/_methods/rfq.ts";
+import { OrderSide } from "./_base/order.ts";
+import type { ExchangeConfig, ExchangeRequestOptions } from "./_base/mod.ts";
 
 // -------------------- Schemas --------------------
 
@@ -11,47 +11,47 @@ import type { ExchangeConfig, ExchangeRequestOptions } from './_base/mod.ts'
 export const SubmitRfqLeg = v.pipe(
   v.object({
     /** Instrument symbol. */
-    instrument: v.pipe(NonEmptyString, v.description('Instrument symbol.')),
+    instrument: v.pipe(NonEmptyString, v.description("Instrument symbol.")),
     /** Requested side. */
-    side: v.pipe(OrderSide, v.description('Requested side.')),
+    side: v.pipe(OrderSide, v.description("Requested side.")),
     /** Requested size as a decimal string. */
-    size: v.pipe(NonEmptyString, v.description('Requested size.')),
+    size: v.pipe(NonEmptyString, v.description("Requested size.")),
   }),
-  v.description('RFQ leg.'),
-)
-export type SubmitRfqLeg = v.InferOutput<typeof SubmitRfqLeg>
+  v.description("RFQ leg."),
+);
+export type SubmitRfqLeg = v.InferOutput<typeof SubmitRfqLeg>;
 
 /** Pre-signed request to submit an RFQ. */
 export const SubmitRfqRequest = v.pipe(
   v.object({
     /** RFQ ID. */
-    rfq_id: v.pipe(NonEmptyString, v.description('RFQ ID.')),
+    rfq_id: v.pipe(NonEmptyString, v.description("RFQ ID.")),
     /** Requested RFQ legs. */
-    legs: v.pipe(v.array(SubmitRfqLeg), v.minLength(1), v.description('RFQ legs.')),
+    legs: v.pipe(v.array(SubmitRfqLeg), v.minLength(1), v.description("RFQ legs.")),
     /** Wallet performing the action. */
-    wallet_address: v.pipe(WalletAddress, v.description('Wallet address.')),
+    wallet_address: v.pipe(WalletAddress, v.description("Wallet address.")),
     /** Nonce used in the EIP-712 signature. */
-    nonce: v.pipe(NonNegativeInteger, v.description('Signature nonce.')),
+    nonce: v.pipe(NonNegativeInteger, v.description("Signature nonce.")),
     /** EIP-712 signature. */
-    signature: v.pipe(NonEmptyString, v.description('EIP-712 signature.')),
+    signature: v.pipe(NonEmptyString, v.description("EIP-712 signature.")),
     /** Optional auto-accept limit for `SubmitAutoExecuteRfq` signatures. */
     auto_accept_limit: v.pipe(
       v.optional(NonEmptyString),
-      v.description('Auto-accept limit.'),
+      v.description("Auto-accept limit."),
     ),
   }),
-  v.description('Pre-signed request to submit an RFQ.'),
-)
-export type SubmitRfqRequest = v.InferOutput<typeof SubmitRfqRequest>
+  v.description("Pre-signed request to submit an RFQ."),
+);
+export type SubmitRfqRequest = v.InferOutput<typeof SubmitRfqRequest>;
 
 /** Parameters for the {@linkcode submitRfq} function. */
-export type SubmitRfqParameters = v.InferInput<typeof SubmitRfqRequest>
+export type SubmitRfqParameters = v.InferInput<typeof SubmitRfqRequest>;
 
 /** Response for submitting an RFQ. */
-export type SubmitRfqResponse = RfqStatusResponse
+export type SubmitRfqResponse = RfqStatusResponse;
 
 /** Request options for the {@linkcode submitRfq} function. */
-export type SubmitRfqOptions = ExchangeRequestOptions
+export type SubmitRfqOptions = ExchangeRequestOptions;
 
 /**
  * Submit an RFQ using a pre-signed Hypercall EIP-712 payload.
@@ -89,17 +89,17 @@ export function submitRfq(
   params: SubmitRfqParameters,
   opts?: SubmitRfqOptions,
 ): Promise<SubmitRfqResponse> {
-  const request = parse(SubmitRfqRequest, params)
+  const request = parse(SubmitRfqRequest, params);
 
   return config.transport.request<SubmitRfqResponse>(
-    '/rfq/request',
+    "/rfq/request",
     {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'content-type': 'application/json',
+        "content-type": "application/json",
       },
       body: JSON.stringify(request),
     },
     opts?.signal,
-  )
+  );
 }

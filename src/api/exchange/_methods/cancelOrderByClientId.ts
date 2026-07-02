@@ -1,8 +1,8 @@
-import * as v from '@valibot/valibot'
+import * as v from "@valibot/valibot";
 
-import { NonEmptyString, NonNegativeInteger, parse, WalletAddress } from '../../_base.ts'
-import { buildSignedBody, type ExchangeConfig, type ExchangeRequestOptions } from './_base/mod.ts'
-import type { CancelOrderResponse } from './cancelOrder.ts'
+import { NonEmptyString, NonNegativeInteger, parse, WalletAddress } from "../../_base.ts";
+import { buildSignedBody, type ExchangeConfig, type ExchangeRequestOptions } from "./_base/mod.ts";
+import type { CancelOrderResponse } from "./cancelOrder.ts";
 
 // -------------------- Schemas --------------------
 
@@ -10,26 +10,26 @@ import type { CancelOrderResponse } from './cancelOrder.ts'
 export const CancelOrderByClientIdRequest = v.pipe(
   v.object({
     /** Wallet performing the action. */
-    wallet: v.pipe(WalletAddress, v.description('Wallet address.')),
+    wallet: v.pipe(WalletAddress, v.description("Wallet address.")),
     /** Client order ID to cancel. */
-    client_id: v.pipe(NonEmptyString, v.description('Client order ID.')),
+    client_id: v.pipe(NonEmptyString, v.description("Client order ID.")),
     /** Nonce used in the EIP-712 signature. */
-    nonce: v.pipe(NonNegativeInteger, v.description('Signature nonce.')),
+    nonce: v.pipe(NonNegativeInteger, v.description("Signature nonce.")),
     /** EIP-712 signature. */
-    signature: v.pipe(NonEmptyString, v.description('EIP-712 signature.')),
+    signature: v.pipe(NonEmptyString, v.description("EIP-712 signature.")),
   }),
-  v.description('Pre-signed request to cancel an order by client ID.'),
-)
-export type CancelOrderByClientIdRequest = v.InferOutput<typeof CancelOrderByClientIdRequest>
+  v.description("Pre-signed request to cancel an order by client ID."),
+);
+export type CancelOrderByClientIdRequest = v.InferOutput<typeof CancelOrderByClientIdRequest>;
 
 /** Parameters for the {@linkcode cancelOrderByClientId} function. */
-export type CancelOrderByClientIdParameters = v.InferInput<typeof CancelOrderByClientIdRequest>
+export type CancelOrderByClientIdParameters = v.InferInput<typeof CancelOrderByClientIdRequest>;
 
 /** Response for canceling an order by client ID. */
-export type CancelOrderByClientIdResponse = CancelOrderResponse
+export type CancelOrderByClientIdResponse = CancelOrderResponse;
 
 /** Request options for the {@linkcode cancelOrderByClientId} function. */
-export type CancelOrderByClientIdOptions = ExchangeRequestOptions
+export type CancelOrderByClientIdOptions = ExchangeRequestOptions;
 
 /**
  * Cancel an order by client ID using a pre-signed Hypercall EIP-712 payload.
@@ -66,17 +66,17 @@ export function cancelOrderByClientId(
   params: CancelOrderByClientIdParameters,
   opts?: CancelOrderByClientIdOptions,
 ): Promise<CancelOrderByClientIdResponse> {
-  const request = parse(CancelOrderByClientIdRequest, params)
+  const request = parse(CancelOrderByClientIdRequest, params);
 
   return config.transport.request<CancelOrderByClientIdResponse>(
-    '/order_cloid',
+    "/order_cloid",
     {
-      method: 'DELETE',
+      method: "DELETE",
       headers: {
-        'content-type': 'application/json',
+        "content-type": "application/json",
       },
       body: JSON.stringify(buildSignedBody(request)),
     },
     opts?.signal,
-  )
+  );
 }

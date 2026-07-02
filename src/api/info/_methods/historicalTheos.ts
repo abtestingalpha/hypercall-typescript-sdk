@@ -1,37 +1,37 @@
-import * as v from '@valibot/valibot'
+import * as v from "@valibot/valibot";
 
-import { NonEmptyString, parse, PositiveInteger } from '../../_base.ts'
-import type { ApiResponse } from './_base/_schemas.ts'
-import { toQuery, type InfoConfig } from './_base/mod.ts'
+import { NonEmptyString, parse, PositiveInteger } from "../../_base.ts";
+import type { ApiResponse } from "./_base/_schemas.ts";
+import { type InfoConfig, toQuery } from "./_base/mod.ts";
 
 // -------------------- Schemas --------------------
 
 const HistoricalTheoIntervalSchema = v.pipe(
-  v.picklist(['5m', '1h', '1d']),
-  v.description('Historical theoretical-price interval.'),
-)
+  v.picklist(["5m", "1h", "1d"]),
+  v.description("Historical theoretical-price interval."),
+);
 
 const HistoricalTheoLimit = v.pipe(
   PositiveInteger,
-  v.maxValue(100, 'Expected a limit of 100 or less.'),
-)
+  v.maxValue(100, "Expected a limit of 100 or less."),
+);
 
 /** Request historical theoretical prices for an option instrument. */
 export const HistoricalTheosRequest = v.pipe(
   v.object({
     /** Option instrument symbol. */
-    instrumentName: v.pipe(NonEmptyString, v.description('Option instrument symbol.')),
+    instrumentName: v.pipe(NonEmptyString, v.description("Option instrument symbol.")),
     /** Interval bucket size. */
     interval: HistoricalTheoIntervalSchema,
     /** Maximum number of periods to return. Defaults to 100 on the API. */
-    limit: v.pipe(v.optional(HistoricalTheoLimit), v.description('Limit.')),
+    limit: v.pipe(v.optional(HistoricalTheoLimit), v.description("Limit.")),
   }),
-  v.description('Request historical theoretical prices for an option instrument.'),
-)
-export type HistoricalTheosRequest = v.InferOutput<typeof HistoricalTheosRequest>
+  v.description("Request historical theoretical prices for an option instrument."),
+);
+export type HistoricalTheosRequest = v.InferOutput<typeof HistoricalTheosRequest>;
 
 /** Request parameters for the {@linkcode historicalTheos} function. */
-export type HistoricalTheosParameters = v.InferInput<typeof HistoricalTheosRequest>
+export type HistoricalTheosParameters = v.InferInput<typeof HistoricalTheosRequest>;
 
 /** Request historical theoretical prices for multiple option instruments. */
 export const HistoricalTheosBatchRequest = v.pipe(
@@ -39,48 +39,48 @@ export const HistoricalTheosBatchRequest = v.pipe(
     /** Option instrument symbols. */
     instrumentNames: v.pipe(
       v.array(NonEmptyString),
-      v.minLength(1, 'Expected at least one instrument name.'),
-      v.maxLength(50, 'Expected 50 or fewer instrument names.'),
-      v.description('Option instrument symbols.'),
+      v.minLength(1, "Expected at least one instrument name."),
+      v.maxLength(50, "Expected 50 or fewer instrument names."),
+      v.description("Option instrument symbols."),
     ),
     /** Interval bucket size. */
     interval: HistoricalTheoIntervalSchema,
     /** Maximum number of periods per instrument. Defaults to 100 on the API. */
-    limit: v.pipe(v.optional(HistoricalTheoLimit), v.description('Limit.')),
+    limit: v.pipe(v.optional(HistoricalTheoLimit), v.description("Limit.")),
   }),
-  v.description('Request historical theoretical prices for multiple option instruments.'),
-)
-export type HistoricalTheosBatchRequest = v.InferOutput<typeof HistoricalTheosBatchRequest>
+  v.description("Request historical theoretical prices for multiple option instruments."),
+);
+export type HistoricalTheosBatchRequest = v.InferOutput<typeof HistoricalTheosBatchRequest>;
 
 /** Request parameters for the {@linkcode historicalTheosBatch} function. */
-export type HistoricalTheosBatchParameters = v.InferInput<typeof HistoricalTheosBatchRequest>
+export type HistoricalTheosBatchParameters = v.InferInput<typeof HistoricalTheosBatchRequest>;
 
 /** Supported historical theoretical-price snapshot intervals. */
-export type HistoricalTheoInterval = v.InferOutput<typeof HistoricalTheoIntervalSchema>
+export type HistoricalTheoInterval = v.InferOutput<typeof HistoricalTheoIntervalSchema>;
 
 /** A single historical theoretical-price point. */
 export type HistoricalTheoPoint = {
   /** Interval bucket start timestamp in milliseconds since epoch. */
-  timestamp: number
+  timestamp: number;
   /** Theoretical option price at the bucket timestamp. */
-  theoretical_price: number
-}
+  theoretical_price: number;
+};
 
 /** Historical theoretical-price data for an option instrument and interval. */
 export type HistoricalTheoData = {
   /** Option instrument symbol. */
-  instrument_name: string
+  instrument_name: string;
   /** Historical interval identifier. */
-  interval: HistoricalTheoInterval
+  interval: HistoricalTheoInterval;
   /** Returned points in ascending timestamp order. */
-  points: HistoricalTheoPoint[]
-}
+  points: HistoricalTheoPoint[];
+};
 
 /** Historical theoretical-price response. */
-export type HistoricalTheosResponse = ApiResponse<HistoricalTheoData>
+export type HistoricalTheosResponse = ApiResponse<HistoricalTheoData>;
 
 /** Batch historical theoretical-price response keyed by requested instrument symbol. */
-export type HistoricalTheosBatchResponse = ApiResponse<Record<string, HistoricalTheoData>>
+export type HistoricalTheosBatchResponse = ApiResponse<Record<string, HistoricalTheoData>>;
 
 /**
  * Request historical theoretical prices for an option instrument.
@@ -114,14 +114,14 @@ export function historicalTheos(
   params: HistoricalTheosParameters,
   signal?: AbortSignal,
 ): Promise<HistoricalTheosResponse> {
-  const request = parse(HistoricalTheosRequest, params)
+  const request = parse(HistoricalTheosRequest, params);
   const query = toQuery({
     instrument_name: request.instrumentName,
     interval: request.interval,
     limit: request.limit,
-  })
+  });
 
-  return config.transport.request<HistoricalTheosResponse>(`/historical-theos?${query}`, {}, signal)
+  return config.transport.request<HistoricalTheosResponse>(`/historical-theos?${query}`, {}, signal);
 }
 
 /**
@@ -156,12 +156,12 @@ export function historicalTheosBatch(
   params: HistoricalTheosBatchParameters,
   signal?: AbortSignal,
 ): Promise<HistoricalTheosBatchResponse> {
-  const request = parse(HistoricalTheosBatchRequest, params)
+  const request = parse(HistoricalTheosBatchRequest, params);
   const query = toQuery({
-    instrument_names: request.instrumentNames.join(','),
+    instrument_names: request.instrumentNames.join(","),
     interval: request.interval,
     limit: request.limit,
-  })
+  });
 
-  return config.transport.request<HistoricalTheosBatchResponse>(`/historical-theos/batch?${query}`, {}, signal)
+  return config.transport.request<HistoricalTheosBatchResponse>(`/historical-theos/batch?${query}`, {}, signal);
 }

@@ -1,7 +1,7 @@
-import * as v from '@valibot/valibot'
+import * as v from "@valibot/valibot";
 
-import { NonEmptyString, NonNegativeInteger, parse, WalletAddress } from '../../_base.ts'
-import type { ExchangeConfig, ExchangeRequestOptions } from './_base/mod.ts'
+import { NonEmptyString, NonNegativeInteger, parse, WalletAddress } from "../../_base.ts";
+import type { ExchangeConfig, ExchangeRequestOptions } from "./_base/mod.ts";
 
 // -------------------- Schemas --------------------
 
@@ -9,29 +9,29 @@ import type { ExchangeConfig, ExchangeRequestOptions } from './_base/mod.ts'
 export const RevokeAgentRequest = v.pipe(
   v.object({
     /** Agent wallet address to revoke. */
-    agent: v.pipe(WalletAddress, v.description('Agent wallet address.')),
+    agent: v.pipe(WalletAddress, v.description("Agent wallet address.")),
     /** Nonce used in the EIP-712 signature. */
-    nonce: v.pipe(NonNegativeInteger, v.description('Signature nonce.')),
+    nonce: v.pipe(NonNegativeInteger, v.description("Signature nonce.")),
     /** EIP-712 signature from the wallet owner. */
-    signature: v.pipe(NonEmptyString, v.description('EIP-712 signature.')),
+    signature: v.pipe(NonEmptyString, v.description("EIP-712 signature.")),
   }),
-  v.description('Pre-signed request to revoke an agent wallet.'),
-)
-export type RevokeAgentRequest = v.InferOutput<typeof RevokeAgentRequest>
+  v.description("Pre-signed request to revoke an agent wallet."),
+);
+export type RevokeAgentRequest = v.InferOutput<typeof RevokeAgentRequest>;
 
 /** Parameters for the {@linkcode revokeAgent} function. */
-export type RevokeAgentParameters = v.InferInput<typeof RevokeAgentRequest>
+export type RevokeAgentParameters = v.InferInput<typeof RevokeAgentRequest>;
 
 /** Response for revoking an agent. */
 export type RevokeAgentResponse = {
   /** Whether the request succeeded. */
-  success: boolean
+  success: boolean;
   /** Human-readable error message, present on failure. */
-  error: string | null
-}
+  error: string | null;
+};
 
 /** Request options for the {@linkcode revokeAgent} function. */
-export type RevokeAgentOptions = ExchangeRequestOptions
+export type RevokeAgentOptions = ExchangeRequestOptions;
 
 /**
  * Revoke an agent wallet using a pre-signed Hypercall EIP-712 payload.
@@ -67,17 +67,17 @@ export function revokeAgent(
   params: RevokeAgentParameters,
   opts?: RevokeAgentOptions,
 ): Promise<RevokeAgentResponse> {
-  const request = parse(RevokeAgentRequest, params)
+  const request = parse(RevokeAgentRequest, params);
 
   return config.transport.request<RevokeAgentResponse>(
-    '/revoke-agent',
+    "/revoke-agent",
     {
-      method: 'DELETE',
+      method: "DELETE",
       headers: {
-        'content-type': 'application/json',
+        "content-type": "application/json",
       },
       body: JSON.stringify(request),
     },
     opts?.signal,
-  )
+  );
 }

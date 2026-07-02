@@ -3,24 +3,24 @@
  * @module
  */
 
-import type { InfoConfig } from './_methods/_base/mod.ts'
+import type { InfoConfig } from "./_methods/_base/mod.ts";
 
-import { authorizedAgents, type AuthorizedAgentsParameters, type AuthorizedAgentsResponse } from './_methods/authorizedAgents.ts'
+import {
+  authorizedAgents,
+  type AuthorizedAgentsParameters,
+  type AuthorizedAgentsResponse,
+} from "./_methods/authorizedAgents.ts";
 import {
   directiveStatus,
-  withdrawalHistory,
   type DirectiveStatusParameters,
   type DirectiveStatusResponse,
+  withdrawalHistory,
   type WithdrawalHistoryParameters,
   type WithdrawalHistoryResponse,
-} from './_methods/directives.ts'
-import { exchangeInfo, type ExchangeInfoResponse } from './_methods/exchangeInfo.ts'
-import { fills, type FillsParameters, type FillsResponse } from './_methods/fills.ts'
-import {
-  historicalPnl,
-  type HistoricalPnlParameters,
-  type HistoricalPnlResponse,
-} from './_methods/historicalPnl.ts'
+} from "./_methods/directives.ts";
+import { exchangeInfo, type ExchangeInfoResponse } from "./_methods/exchangeInfo.ts";
+import { fills, type FillsParameters, type FillsResponse } from "./_methods/fills.ts";
+import { historicalPnl, type HistoricalPnlParameters, type HistoricalPnlResponse } from "./_methods/historicalPnl.ts";
 import {
   historicalTheos,
   historicalTheosBatch,
@@ -28,63 +28,59 @@ import {
   type HistoricalTheosBatchResponse,
   type HistoricalTheosParameters,
   type HistoricalTheosResponse,
-} from './_methods/historicalTheos.ts'
-import { instruments, type InstrumentsParameters, type InstrumentsResponse } from './_methods/instruments.ts'
+} from "./_methods/historicalTheos.ts";
+import { instruments, type InstrumentsParameters, type InstrumentsResponse } from "./_methods/instruments.ts";
 import {
   liquidationHistory,
-  liquidations,
-  liquidationStatus,
   type LiquidationHistoryParameters,
   type LiquidationHistoryResponse,
+  liquidations,
   type LiquidationsParameters,
   type LiquidationsResponse,
+  liquidationStatus,
   type LiquidationStatusParameters,
   type LiquidationStatusResponse,
-} from './_methods/liquidations.ts'
+} from "./_methods/liquidations.ts";
 import {
   markets,
   type MarketsParameters,
   type MarketsResponse,
   type MarketsSlimParameters,
   type MarketsSlimResponse,
-} from './_methods/markets.ts'
+} from "./_methods/markets.ts";
 import {
   optionSummaries,
   type OptionSummariesParameters,
   type OptionSummariesResponse,
-} from './_methods/optionSummaries.ts'
-import { orderbook, type OrderbookParameters, type OrderbookResponse } from './_methods/orderbook.ts'
-import { orders, type OrdersParameters, type OrdersResponse } from './_methods/orders.ts'
-import { portfolio, type PortfolioParameters, type PortfolioResponse } from './_methods/portfolio.ts'
+} from "./_methods/optionSummaries.ts";
+import { orderbook, type OrderbookParameters, type OrderbookResponse } from "./_methods/orderbook.ts";
+import { orders, type OrdersParameters, type OrdersResponse } from "./_methods/orders.ts";
+import { portfolio, type PortfolioParameters, type PortfolioResponse } from "./_methods/portfolio.ts";
 import {
   profile,
-  profileRealizedPnl,
-  profileTrades,
   type ProfileParameters,
+  profileRealizedPnl,
   type ProfileRealizedPnlParameters,
-  type ProfileTradesParameters,
   type ProfileResponse,
+  profileTrades,
+  type ProfileTradesParameters,
   type ProfileTradesResponse,
   type RealizedPnlResponse,
-} from './_methods/profile.ts'
-import {
-  rfqStatus,
-  type RfqStatusParameters,
-  type RfqStatusResponse,
-} from './_methods/rfq.ts'
+} from "./_methods/profile.ts";
+import { rfqStatus, type RfqStatusParameters, type RfqStatusResponse } from "./_methods/rfq.ts";
 import {
   settlementPayouts,
   type SettlementPayoutsParameters,
   type SettlementPayoutsResponse,
-} from './_methods/settlementPayouts.ts'
-import { trades, type TradesParameters, type TradesResponse } from './_methods/trades.ts'
+} from "./_methods/settlementPayouts.ts";
+import { trades, type TradesParameters, type TradesResponse } from "./_methods/trades.ts";
 
 /** A client for interacting with the Hypercall Info API. */
 export class InfoClient<C extends InfoConfig = InfoConfig> {
-  config_: C
+  config_: C;
 
   constructor(config: C) {
-    this.config_ = config
+    this.config_ = config;
   }
 
   /**
@@ -109,19 +105,19 @@ export class InfoClient<C extends InfoConfig = InfoConfig> {
    *
    * @see https://docs.hypercall.xyz/docs/trading/over-api/
    */
-  markets(params: MarketsSlimParameters, signal?: AbortSignal): Promise<MarketsSlimResponse>
+  markets(params: MarketsSlimParameters, signal?: AbortSignal): Promise<MarketsSlimResponse>;
   markets(
     params?: MarketsParameters,
     signal?: AbortSignal,
-  ): Promise<MarketsResponse>
-  markets(signal?: AbortSignal): Promise<MarketsResponse>
+  ): Promise<MarketsResponse>;
+  markets(signal?: AbortSignal): Promise<MarketsResponse>;
   markets(
     paramsOrSignal?: MarketsParameters | AbortSignal,
     maybeSignal?: AbortSignal,
   ): Promise<MarketsResponse | MarketsSlimResponse> {
-    const params = paramsOrSignal instanceof AbortSignal ? {} : (paramsOrSignal ?? {})
-    const signal = paramsOrSignal instanceof AbortSignal ? paramsOrSignal : maybeSignal
-    return markets(this.config_, params, signal)
+    const params = paramsOrSignal instanceof AbortSignal ? {} : (paramsOrSignal ?? {});
+    const signal = paramsOrSignal instanceof AbortSignal ? paramsOrSignal : maybeSignal;
+    return markets(this.config_, params, signal);
   }
 
   /**
@@ -145,7 +141,7 @@ export class InfoClient<C extends InfoConfig = InfoConfig> {
    * @see https://docs.hypercall.xyz/docs/trading/over-api/
    */
   exchangeInfo(signal?: AbortSignal): Promise<ExchangeInfoResponse> {
-    return exchangeInfo(this.config_, signal)
+    return exchangeInfo(this.config_, signal);
   }
 
   /**
@@ -174,7 +170,7 @@ export class InfoClient<C extends InfoConfig = InfoConfig> {
     params: InstrumentsParameters,
     signal?: AbortSignal,
   ): Promise<InstrumentsResponse> {
-    return instruments(this.config_, params, signal)
+    return instruments(this.config_, params, signal);
   }
 
   /**
@@ -203,7 +199,7 @@ export class InfoClient<C extends InfoConfig = InfoConfig> {
     params: OptionSummariesParameters,
     signal?: AbortSignal,
   ): Promise<OptionSummariesResponse> {
-    return optionSummaries(this.config_, params, signal)
+    return optionSummaries(this.config_, params, signal);
   }
 
   /**
@@ -232,7 +228,7 @@ export class InfoClient<C extends InfoConfig = InfoConfig> {
     params: OrderbookParameters,
     signal?: AbortSignal,
   ): Promise<OrderbookResponse> {
-    return orderbook(this.config_, params, signal)
+    return orderbook(this.config_, params, signal);
   }
 
   /**
@@ -263,7 +259,7 @@ export class InfoClient<C extends InfoConfig = InfoConfig> {
     params: PortfolioParameters,
     signal?: AbortSignal,
   ): Promise<PortfolioResponse> {
-    return portfolio(this.config_, params, signal)
+    return portfolio(this.config_, params, signal);
   }
 
   /**
@@ -294,7 +290,7 @@ export class InfoClient<C extends InfoConfig = InfoConfig> {
     params: ProfileParameters,
     signal?: AbortSignal,
   ): Promise<ProfileResponse> {
-    return profile(this.config_, params, signal)
+    return profile(this.config_, params, signal);
   }
 
   /**
@@ -327,7 +323,7 @@ export class InfoClient<C extends InfoConfig = InfoConfig> {
     params: ProfileTradesParameters,
     signal?: AbortSignal,
   ): Promise<ProfileTradesResponse> {
-    return profileTrades(this.config_, params, signal)
+    return profileTrades(this.config_, params, signal);
   }
 
   /**
@@ -358,7 +354,7 @@ export class InfoClient<C extends InfoConfig = InfoConfig> {
     params: ProfileRealizedPnlParameters,
     signal?: AbortSignal,
   ): Promise<RealizedPnlResponse> {
-    return profileRealizedPnl(this.config_, params, signal)
+    return profileRealizedPnl(this.config_, params, signal);
   }
 
   /**
@@ -390,7 +386,7 @@ export class InfoClient<C extends InfoConfig = InfoConfig> {
     params: OrdersParameters,
     signal?: AbortSignal,
   ): Promise<OrdersResponse> {
-    return orders(this.config_, params, signal)
+    return orders(this.config_, params, signal);
   }
 
   /**
@@ -422,7 +418,7 @@ export class InfoClient<C extends InfoConfig = InfoConfig> {
     params: FillsParameters,
     signal?: AbortSignal,
   ): Promise<FillsResponse> {
-    return fills(this.config_, params, signal)
+    return fills(this.config_, params, signal);
   }
 
   /**
@@ -455,7 +451,7 @@ export class InfoClient<C extends InfoConfig = InfoConfig> {
     params: TradesParameters = {},
     signal?: AbortSignal,
   ): Promise<TradesResponse> {
-    return trades(this.config_, params, signal)
+    return trades(this.config_, params, signal);
   }
 
   /**
@@ -488,7 +484,7 @@ export class InfoClient<C extends InfoConfig = InfoConfig> {
     params: HistoricalPnlParameters,
     signal?: AbortSignal,
   ): Promise<HistoricalPnlResponse> {
-    return historicalPnl(this.config_, params, signal)
+    return historicalPnl(this.config_, params, signal);
   }
 
   /**
@@ -519,7 +515,7 @@ export class InfoClient<C extends InfoConfig = InfoConfig> {
     params: LiquidationStatusParameters,
     signal?: AbortSignal,
   ): Promise<LiquidationStatusResponse> {
-    return liquidationStatus(this.config_, params, signal)
+    return liquidationStatus(this.config_, params, signal);
   }
 
   /**
@@ -552,7 +548,7 @@ export class InfoClient<C extends InfoConfig = InfoConfig> {
     params: LiquidationHistoryParameters,
     signal?: AbortSignal,
   ): Promise<LiquidationHistoryResponse> {
-    return liquidationHistory(this.config_, params, signal)
+    return liquidationHistory(this.config_, params, signal);
   }
 
   /**
@@ -586,7 +582,7 @@ export class InfoClient<C extends InfoConfig = InfoConfig> {
     params: LiquidationsParameters = {},
     signal?: AbortSignal,
   ): Promise<LiquidationsResponse> {
-    return liquidations(this.config_, params, signal)
+    return liquidations(this.config_, params, signal);
   }
 
   /**
@@ -618,7 +614,7 @@ export class InfoClient<C extends InfoConfig = InfoConfig> {
     params: SettlementPayoutsParameters,
     signal?: AbortSignal,
   ): Promise<SettlementPayoutsResponse> {
-    return settlementPayouts(this.config_, params, signal)
+    return settlementPayouts(this.config_, params, signal);
   }
 
   /**
@@ -649,7 +645,7 @@ export class InfoClient<C extends InfoConfig = InfoConfig> {
     params: AuthorizedAgentsParameters,
     signal?: AbortSignal,
   ): Promise<AuthorizedAgentsResponse> {
-    return authorizedAgents(this.config_, params, signal)
+    return authorizedAgents(this.config_, params, signal);
   }
 
   /**
@@ -680,7 +676,7 @@ export class InfoClient<C extends InfoConfig = InfoConfig> {
     params: DirectiveStatusParameters,
     signal?: AbortSignal,
   ): Promise<DirectiveStatusResponse> {
-    return directiveStatus(this.config_, params, signal)
+    return directiveStatus(this.config_, params, signal);
   }
 
   /**
@@ -712,7 +708,7 @@ export class InfoClient<C extends InfoConfig = InfoConfig> {
     params: WithdrawalHistoryParameters,
     signal?: AbortSignal,
   ): Promise<WithdrawalHistoryResponse> {
-    return withdrawalHistory(this.config_, params, signal)
+    return withdrawalHistory(this.config_, params, signal);
   }
 
   /**
@@ -743,7 +739,7 @@ export class InfoClient<C extends InfoConfig = InfoConfig> {
     params: RfqStatusParameters,
     signal?: AbortSignal,
   ): Promise<RfqStatusResponse> {
-    return rfqStatus(this.config_, params, signal)
+    return rfqStatus(this.config_, params, signal);
   }
 
   /**
@@ -776,7 +772,7 @@ export class InfoClient<C extends InfoConfig = InfoConfig> {
     params: HistoricalTheosParameters,
     signal?: AbortSignal,
   ): Promise<HistoricalTheosResponse> {
-    return historicalTheos(this.config_, params, signal)
+    return historicalTheos(this.config_, params, signal);
   }
 
   /**
@@ -809,7 +805,7 @@ export class InfoClient<C extends InfoConfig = InfoConfig> {
     params: HistoricalTheosBatchParameters,
     signal?: AbortSignal,
   ): Promise<HistoricalTheosBatchResponse> {
-    return historicalTheosBatch(this.config_, params, signal)
+    return historicalTheosBatch(this.config_, params, signal);
   }
 }
 
@@ -817,7 +813,7 @@ export type {
   AuthorizedAgentsParameters,
   AuthorizedAgentsRequest,
   AuthorizedAgentsResponse,
-} from './_methods/authorizedAgents.ts'
+} from "./_methods/authorizedAgents.ts";
 export type {
   DirectiveDeliveryStatus,
   DirectiveDomainStatus,
@@ -827,7 +823,7 @@ export type {
   WithdrawalHistoryParameters,
   WithdrawalHistoryRequest,
   WithdrawalHistoryResponse,
-} from './_methods/directives.ts'
+} from "./_methods/directives.ts";
 export type {
   Address,
   ApiResponse,
@@ -840,9 +836,9 @@ export type {
   Pagination,
   Side,
   TickSizeStep,
-} from './_methods/_base/_schemas.ts'
-export type { ExchangeInfoRequest, ExchangeInfoResponse, SigningDomainInfo } from './_methods/exchangeInfo.ts'
-export type { Fill, FillsParameters, FillsRequest, FillsResponse } from './_methods/fills.ts'
+} from "./_methods/_base/_schemas.ts";
+export type { ExchangeInfoRequest, ExchangeInfoResponse, SigningDomainInfo } from "./_methods/exchangeInfo.ts";
+export type { Fill, FillsParameters, FillsRequest, FillsResponse } from "./_methods/fills.ts";
 export type {
   HistoricalPnlData,
   HistoricalPnlInterval,
@@ -851,7 +847,7 @@ export type {
   HistoricalPnlRequest,
   HistoricalPnlResponse,
   SymbolAttribution,
-} from './_methods/historicalPnl.ts'
+} from "./_methods/historicalPnl.ts";
 export type {
   HistoricalTheoData,
   HistoricalTheoInterval,
@@ -862,8 +858,13 @@ export type {
   HistoricalTheosParameters,
   HistoricalTheosRequest,
   HistoricalTheosResponse,
-} from './_methods/historicalTheos.ts'
-export type { Instrument, InstrumentsParameters, InstrumentsRequest, InstrumentsResponse } from './_methods/instruments.ts'
+} from "./_methods/historicalTheos.ts";
+export type {
+  Instrument,
+  InstrumentsParameters,
+  InstrumentsRequest,
+  InstrumentsResponse,
+} from "./_methods/instruments.ts";
 export type {
   CursorPage,
   FullLiquidationStatusData,
@@ -883,31 +884,31 @@ export type {
   MarginMode,
   PartialLiquidationStatusData,
   StandardMarginLiquidationPosition,
-} from './_methods/liquidations.ts'
+} from "./_methods/liquidations.ts";
 export type {
   InstrumentStatus,
   Market,
   MarketInstrument,
+  MarketSlim,
   MarketsParameters,
   MarketsRequest,
   MarketsResponse,
   MarketsSlimParameters,
   MarketsSlimResponse,
-  MarketSlim,
-} from './_methods/markets.ts'
+} from "./_methods/markets.ts";
 export type {
   OptionSummariesParameters,
   OptionSummariesRequest,
   OptionSummariesResponse,
   OptionSummary,
-} from './_methods/optionSummaries.ts'
+} from "./_methods/optionSummaries.ts";
 export type {
   OrderBook,
   OrderbookParameters,
   OrderbookRequest,
   OrderbookResponse,
   OrderBookStats,
-} from './_methods/orderbook.ts'
+} from "./_methods/orderbook.ts";
 export type {
   Order,
   OrdersParameters,
@@ -915,7 +916,7 @@ export type {
   OrdersResponse,
   OrderStatus,
   TimeInForce,
-} from './_methods/orders.ts'
+} from "./_methods/orders.ts";
 export type {
   MarginSummary,
   Portfolio,
@@ -924,7 +925,7 @@ export type {
   PortfolioRequest,
   PortfolioResponse,
   SpanMarginSummary,
-} from './_methods/portfolio.ts'
+} from "./_methods/portfolio.ts";
 export type {
   MedalCode,
   ProfileCompetitionRankSummary,
@@ -943,7 +944,7 @@ export type {
   ProfileTradesResponse,
   RealizedPnlResponse,
   RealizedPnlRow,
-} from './_methods/profile.ts'
+} from "./_methods/profile.ts";
 export type {
   RfqLeg,
   RfqQuote,
@@ -952,13 +953,13 @@ export type {
   RfqStatusParameters,
   RfqStatusRequest,
   RfqStatusResponse,
-} from './_methods/rfq.ts'
+} from "./_methods/rfq.ts";
 export type {
   SettlementPayout,
   SettlementPayoutsParameters,
   SettlementPayoutsRequest,
   SettlementPayoutsResponse,
-} from './_methods/settlementPayouts.ts'
+} from "./_methods/settlementPayouts.ts";
 export type {
   AccountTradesParameters,
   AllTradesParameters,
@@ -968,4 +969,4 @@ export type {
   TradesRequest,
   TradesResponse,
   UnderlyingTradesParameters,
-} from './_methods/trades.ts'
+} from "./_methods/trades.ts";

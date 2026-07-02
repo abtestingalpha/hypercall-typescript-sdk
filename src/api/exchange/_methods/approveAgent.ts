@@ -1,7 +1,7 @@
-import * as v from '@valibot/valibot'
+import * as v from "@valibot/valibot";
 
-import { NonEmptyString, NonNegativeInteger, parse, WalletAddress } from '../../_base.ts'
-import type { ExchangeConfig, ExchangeRequestOptions } from './_base/mod.ts'
+import { NonEmptyString, NonNegativeInteger, parse, WalletAddress } from "../../_base.ts";
+import type { ExchangeConfig, ExchangeRequestOptions } from "./_base/mod.ts";
 
 // -------------------- Schemas --------------------
 
@@ -9,29 +9,29 @@ import type { ExchangeConfig, ExchangeRequestOptions } from './_base/mod.ts'
 export const ApproveAgentRequest = v.pipe(
   v.object({
     /** Agent wallet address to authorize. */
-    agent: v.pipe(WalletAddress, v.description('Agent wallet address.')),
+    agent: v.pipe(WalletAddress, v.description("Agent wallet address.")),
     /** Nonce used in the EIP-712 signature. */
-    nonce: v.pipe(NonNegativeInteger, v.description('Signature nonce.')),
+    nonce: v.pipe(NonNegativeInteger, v.description("Signature nonce.")),
     /** EIP-712 signature from the wallet owner. */
-    signature: v.pipe(NonEmptyString, v.description('EIP-712 signature.')),
+    signature: v.pipe(NonEmptyString, v.description("EIP-712 signature.")),
   }),
-  v.description('Pre-signed request to approve an agent wallet.'),
-)
-export type ApproveAgentRequest = v.InferOutput<typeof ApproveAgentRequest>
+  v.description("Pre-signed request to approve an agent wallet."),
+);
+export type ApproveAgentRequest = v.InferOutput<typeof ApproveAgentRequest>;
 
 /** Parameters for the {@linkcode approveAgent} function. */
-export type ApproveAgentParameters = v.InferInput<typeof ApproveAgentRequest>
+export type ApproveAgentParameters = v.InferInput<typeof ApproveAgentRequest>;
 
 /** Response for approving an agent. */
 export type ApproveAgentResponse = {
   /** Whether the request succeeded. */
-  success: boolean
+  success: boolean;
   /** Human-readable error message, present on failure. */
-  error: string | null
-}
+  error: string | null;
+};
 
 /** Request options for the {@linkcode approveAgent} function. */
-export type ApproveAgentOptions = ExchangeRequestOptions
+export type ApproveAgentOptions = ExchangeRequestOptions;
 
 /**
  * Approve an agent wallet using a pre-signed Hypercall EIP-712 payload.
@@ -67,17 +67,17 @@ export function approveAgent(
   params: ApproveAgentParameters,
   opts?: ApproveAgentOptions,
 ): Promise<ApproveAgentResponse> {
-  const request = parse(ApproveAgentRequest, params)
+  const request = parse(ApproveAgentRequest, params);
 
   return config.transport.request<ApproveAgentResponse>(
-    '/approve-agent',
+    "/approve-agent",
     {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'content-type': 'application/json',
+        "content-type": "application/json",
       },
       body: JSON.stringify(request),
     },
     opts?.signal,
-  )
+  );
 }

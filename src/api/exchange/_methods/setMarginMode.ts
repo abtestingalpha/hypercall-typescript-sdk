@@ -1,55 +1,55 @@
-import * as v from '@valibot/valibot'
+import * as v from "@valibot/valibot";
 
-import { NonEmptyString, NonNegativeInteger, parse, WalletAddress } from '../../_base.ts'
-import { buildSignedBody, type ExchangeConfig, type ExchangeRequestOptions } from './_base/mod.ts'
+import { NonEmptyString, NonNegativeInteger, parse, WalletAddress } from "../../_base.ts";
+import { buildSignedBody, type ExchangeConfig, type ExchangeRequestOptions } from "./_base/mod.ts";
 
 // -------------------- Schemas --------------------
 
 /** Margin mode accepted by Hypercall account write endpoints. */
-export const MarginModeSelection = v.picklist(['standard', 'portfolio'])
-export type MarginModeSelection = v.InferOutput<typeof MarginModeSelection>
+export const MarginModeSelection = v.picklist(["standard", "portfolio"]);
+export type MarginModeSelection = v.InferOutput<typeof MarginModeSelection>;
 
 /** Pre-signed request to set account margin mode. */
 export const SetMarginModeRequest = v.pipe(
   v.object({
     /** Wallet performing the action. */
-    wallet: v.pipe(WalletAddress, v.description('Wallet address.')),
+    wallet: v.pipe(WalletAddress, v.description("Wallet address.")),
     /** Requested margin mode. */
-    margin_mode: v.pipe(MarginModeSelection, v.description('Margin mode.')),
+    margin_mode: v.pipe(MarginModeSelection, v.description("Margin mode.")),
     /** Nonce used in the EIP-712 signature. */
-    nonce: v.pipe(NonNegativeInteger, v.description('Signature nonce.')),
+    nonce: v.pipe(NonNegativeInteger, v.description("Signature nonce.")),
     /** EIP-712 signature. */
-    signature: v.pipe(NonEmptyString, v.description('EIP-712 signature.')),
+    signature: v.pipe(NonEmptyString, v.description("EIP-712 signature.")),
   }),
-  v.description('Pre-signed request to set account margin mode.'),
-)
-export type SetMarginModeRequest = v.InferOutput<typeof SetMarginModeRequest>
+  v.description("Pre-signed request to set account margin mode."),
+);
+export type SetMarginModeRequest = v.InferOutput<typeof SetMarginModeRequest>;
 
 /** Parameters for the {@linkcode setMarginMode} function. */
-export type SetMarginModeParameters = v.InferInput<typeof SetMarginModeRequest>
+export type SetMarginModeParameters = v.InferInput<typeof SetMarginModeRequest>;
 
 /** Margin mode change details returned by the backend on success. */
 export type MarginModeResponse = {
   /** Wallet address whose margin mode was updated. */
-  wallet: string
+  wallet: string;
   /** New margin mode after the switch. */
-  margin_mode: string
+  margin_mode: string;
   /** Margin mode before the switch. */
-  previous_mode: string
-}
+  previous_mode: string;
+};
 
 /** Response envelope for setting margin mode. */
 export type SetMarginModeResponse = {
   /** Whether the request succeeded. */
-  success: boolean
+  success: boolean;
   /** Margin mode change details, present on success. */
-  data: MarginModeResponse | null
+  data: MarginModeResponse | null;
   /** Human-readable error message, present on failure. */
-  error: string | null
-}
+  error: string | null;
+};
 
 /** Request options for the {@linkcode setMarginMode} function. */
-export type SetMarginModeOptions = ExchangeRequestOptions
+export type SetMarginModeOptions = ExchangeRequestOptions;
 
 /**
  * Set account margin mode using a pre-signed Hypercall EIP-712 payload.
@@ -86,17 +86,17 @@ export function setMarginMode(
   params: SetMarginModeParameters,
   opts?: SetMarginModeOptions,
 ): Promise<SetMarginModeResponse> {
-  const request = parse(SetMarginModeRequest, params)
+  const request = parse(SetMarginModeRequest, params);
 
   return config.transport.request<SetMarginModeResponse>(
-    '/margin-mode',
+    "/margin-mode",
     {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'content-type': 'application/json',
+        "content-type": "application/json",
       },
       body: JSON.stringify(buildSignedBody(request)),
     },
     opts?.signal,
-  )
+  );
 }

@@ -1,8 +1,8 @@
-import * as v from '@valibot/valibot'
+import * as v from "@valibot/valibot";
 
-import { NonEmptyString, NonNegativeInteger, parse, PositiveInteger, WalletAddress } from '../../_base.ts'
-import { buildSignedBody, type ExchangeConfig, type ExchangeRequestOptions } from './_base/mod.ts'
-import type { OrderUpdateMessage } from './_base/order.ts'
+import { NonEmptyString, NonNegativeInteger, parse, PositiveInteger, WalletAddress } from "../../_base.ts";
+import { buildSignedBody, type ExchangeConfig, type ExchangeRequestOptions } from "./_base/mod.ts";
+import type { OrderUpdateMessage } from "./_base/order.ts";
 
 // -------------------- Schemas --------------------
 
@@ -10,33 +10,33 @@ import type { OrderUpdateMessage } from './_base/order.ts'
 export const CancelOrderRequest = v.pipe(
   v.object({
     /** Wallet performing the action. */
-    wallet: v.pipe(WalletAddress, v.description('Wallet address.')),
+    wallet: v.pipe(WalletAddress, v.description("Wallet address.")),
     /** Order ID to cancel. */
-    order_id: v.pipe(PositiveInteger, v.description('Order ID.')),
+    order_id: v.pipe(PositiveInteger, v.description("Order ID.")),
     /** Nonce used in the EIP-712 signature. */
-    nonce: v.pipe(NonNegativeInteger, v.description('Signature nonce.')),
+    nonce: v.pipe(NonNegativeInteger, v.description("Signature nonce.")),
     /** EIP-712 signature. */
-    signature: v.pipe(NonEmptyString, v.description('EIP-712 signature.')),
+    signature: v.pipe(NonEmptyString, v.description("EIP-712 signature.")),
   }),
-  v.description('Pre-signed request to cancel an order by order ID.'),
-)
-export type CancelOrderRequest = v.InferOutput<typeof CancelOrderRequest>
+  v.description("Pre-signed request to cancel an order by order ID."),
+);
+export type CancelOrderRequest = v.InferOutput<typeof CancelOrderRequest>;
 
 /** Parameters for the {@linkcode cancelOrder} function. */
-export type CancelOrderParameters = v.InferInput<typeof CancelOrderRequest>
+export type CancelOrderParameters = v.InferInput<typeof CancelOrderRequest>;
 
 /** Response for canceling an order. */
 export type CancelOrderResponse = {
   /** Whether the request succeeded. */
-  success: boolean
+  success: boolean;
   /** Order update, present when the backend returns a processed cancel result. */
-  data: OrderUpdateMessage | null
+  data: OrderUpdateMessage | null;
   /** Human-readable error message, present on failure. */
-  error?: string | null
-}
+  error?: string | null;
+};
 
 /** Request options for the {@linkcode cancelOrder} function. */
-export type CancelOrderOptions = ExchangeRequestOptions
+export type CancelOrderOptions = ExchangeRequestOptions;
 
 /**
  * Cancel an order by order ID using a pre-signed Hypercall EIP-712 payload.
@@ -73,17 +73,17 @@ export function cancelOrder(
   params: CancelOrderParameters,
   opts?: CancelOrderOptions,
 ): Promise<CancelOrderResponse> {
-  const request = parse(CancelOrderRequest, params)
+  const request = parse(CancelOrderRequest, params);
 
   return config.transport.request<CancelOrderResponse>(
-    '/order',
+    "/order",
     {
-      method: 'DELETE',
+      method: "DELETE",
       headers: {
-        'content-type': 'application/json',
+        "content-type": "application/json",
       },
       body: JSON.stringify(buildSignedBody(request)),
     },
     opts?.signal,
-  )
+  );
 }

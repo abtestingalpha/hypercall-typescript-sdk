@@ -1,8 +1,8 @@
-import * as v from '@valibot/valibot'
+import * as v from "@valibot/valibot";
 
-import { NonEmptyString, parse } from '../../_base.ts'
-import type { Address, JsonRpcResponse, TickSizeStep } from './_base/_schemas.ts'
-import { toQuery, type InfoConfig } from './_base/mod.ts'
+import { NonEmptyString, parse } from "../../_base.ts";
+import type { Address, JsonRpcResponse, TickSizeStep } from "./_base/_schemas.ts";
+import { type InfoConfig, toQuery } from "./_base/mod.ts";
 
 // -------------------- Schemas --------------------
 
@@ -10,77 +10,77 @@ import { toQuery, type InfoConfig } from './_base/mod.ts'
 export const InstrumentsRequest = v.pipe(
   v.object({
     /** Underlying currency, such as BTC or US500. */
-    currency: v.pipe(NonEmptyString, v.description('Underlying currency.')),
+    currency: v.pipe(NonEmptyString, v.description("Underlying currency.")),
     /** Instrument kind. */
-    kind: v.pipe(v.optional(NonEmptyString), v.description('Instrument kind.')),
+    kind: v.pipe(v.optional(NonEmptyString), v.description("Instrument kind.")),
   }),
-  v.description('Request instruments for a currency.'),
-)
-export type InstrumentsRequest = v.InferOutput<typeof InstrumentsRequest>
+  v.description("Request instruments for a currency."),
+);
+export type InstrumentsRequest = v.InferOutput<typeof InstrumentsRequest>;
 
 /** Request parameters for the {@linkcode instruments} function. */
-export type InstrumentsParameters = v.InferInput<typeof InstrumentsRequest>
+export type InstrumentsParameters = v.InferInput<typeof InstrumentsRequest>;
 
 /** Public instrument metadata from the Deribit-compatible instruments endpoint. */
 export type Instrument = {
   /** Price index name. */
-  price_index: string
+  price_index: string;
   /** Whether RFQ is enabled. */
-  rfq: boolean
+  rfq: boolean;
   /** Whether the orderbook is enabled. */
-  orderbook: boolean
+  orderbook: boolean;
   /** Instrument kind. */
-  kind: 'option' | string
+  kind: "option" | string;
   /** Human-readable instrument symbol. */
-  instrument_name: string
+  instrument_name: string;
   /** Option token contract address, if deployed. */
-  option_token_address: Address | null
+  option_token_address: Address | null;
   /** Maker commission rate. */
-  maker_commission: number
+  maker_commission: number;
   /** Taker commission rate. */
-  taker_commission: number
+  taker_commission: number;
   /** Instrument type. */
-  instrument_type: string
+  instrument_type: string;
   /** Expiration timestamp in milliseconds since epoch. */
-  expiration_timestamp: number
+  expiration_timestamp: number;
   /** Creation timestamp in milliseconds since epoch. */
-  creation_timestamp: number
+  creation_timestamp: number;
   /** Whether the instrument is active. */
-  is_active: boolean
+  is_active: boolean;
   /** Option type. */
-  option_type: 'call' | 'put' | string
+  option_type: "call" | "put" | string;
   /** Contract size. */
-  contract_size: number
+  contract_size: number;
   /** Base tick size. */
-  tick_size: number
+  tick_size: number;
   /** Strike price. */
-  strike: number
+  strike: number;
   /** Numeric instrument identifier. */
-  instrument_id: number
+  instrument_id: number;
   /** Settlement period. */
-  settlement_period: string
+  settlement_period: string;
   /** Minimum trade amount. */
-  min_trade_amount: number
+  min_trade_amount: number;
   /** Block trade commission. */
-  block_trade_commission: number
+  block_trade_commission: number;
   /** Block trade minimum amount. */
-  block_trade_min_trade_amount: number
+  block_trade_min_trade_amount: number;
   /** Block trade tick size. */
-  block_trade_tick_size: number
+  block_trade_tick_size: number;
   /** Settlement currency. */
-  settlement_currency: string
+  settlement_currency: string;
   /** Base currency. */
-  base_currency: string
+  base_currency: string;
   /** Counter currency. */
-  counter_currency: string
+  counter_currency: string;
   /** Quote currency. */
-  quote_currency: string
+  quote_currency: string;
   /** Stepped tick-size rules. */
-  tick_size_steps: TickSizeStep[]
-}
+  tick_size_steps: TickSizeStep[];
+};
 
 /** Instruments response. */
-export type InstrumentsResponse = JsonRpcResponse<Instrument[]>
+export type InstrumentsResponse = JsonRpcResponse<Instrument[]>;
 
 /**
  * Request instruments for a currency.
@@ -110,11 +110,11 @@ export function instruments(
   params: InstrumentsParameters,
   signal?: AbortSignal,
 ): Promise<InstrumentsResponse> {
-  const request = parse(InstrumentsRequest, params)
+  const request = parse(InstrumentsRequest, params);
   const query = toQuery({
     currency: request.currency,
-    kind: request.kind ?? 'option',
-  })
+    kind: request.kind ?? "option",
+  });
 
-  return config.transport.request<InstrumentsResponse>(`/instruments?${query}`, {}, signal)
+  return config.transport.request<InstrumentsResponse>(`/instruments?${query}`, {}, signal);
 }

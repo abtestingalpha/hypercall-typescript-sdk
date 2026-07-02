@@ -1,24 +1,24 @@
-import * as v from '@valibot/valibot'
+import * as v from "@valibot/valibot";
 
 /** Base error class for all SDK errors. */
 export class HypercallError extends Error {
   constructor(message?: string, options?: ErrorOptions) {
-    super(message, options)
-    this.name = 'HypercallError'
+    super(message, options);
+    this.name = "HypercallError";
   }
 }
 
 /** Thrown when an SDK method receives invalid input. */
 export class ValidationError extends HypercallError {
-  override cause: v.ValiError<v.BaseSchema<unknown, unknown, v.BaseIssue<unknown>>>
+  override cause: v.ValiError<v.BaseSchema<unknown, unknown, v.BaseIssue<unknown>>>;
 
   constructor(
     message: string,
     options: { cause: v.ValiError<v.BaseSchema<unknown, unknown, v.BaseIssue<unknown>>> },
   ) {
-    super(message, options)
-    this.name = 'ValidationError'
-    this.cause = options.cause
+    super(message, options);
+    this.name = "ValidationError";
+    this.cause = options.cause;
   }
 }
 
@@ -28,9 +28,9 @@ export function parse<const TSchema extends v.BaseSchema<unknown, unknown, v.Bas
   input: unknown,
 ): v.InferOutput<TSchema> {
   try {
-    return v.parse(schema, input)
+    return v.parse(schema, input);
   } catch (error) {
-    const valiError = error as v.ValiError<typeof schema>
-    throw new ValidationError(v.summarize(valiError.issues), { cause: valiError })
+    const valiError = error as v.ValiError<typeof schema>;
+    throw new ValidationError(v.summarize(valiError.issues), { cause: valiError });
   }
 }

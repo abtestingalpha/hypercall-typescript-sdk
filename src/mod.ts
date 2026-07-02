@@ -24,7 +24,7 @@
  * @module
  */
 
-export { HypercallError, ValidationError } from './_base.ts'
-export * from './transport/mod.ts'
-export * from './api/exchange/client.ts'
-export * from './api/info/client.ts'
+export { HypercallError, ValidationError } from "./_base.ts";
+export * from "./transport/mod.ts";
+export * from "./api/exchange/client.ts";
+export * from "./api/info/client.ts";

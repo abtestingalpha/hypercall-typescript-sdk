@@ -1,8 +1,8 @@
-import * as v from '@valibot/valibot'
+import * as v from "@valibot/valibot";
 
-import { NonEmptyString, parse } from '../../_base.ts'
-import type { Decimal, Side } from './_base/_schemas.ts'
-import type { InfoConfig } from './_base/mod.ts'
+import { NonEmptyString, parse } from "../../_base.ts";
+import type { Decimal, Side } from "./_base/_schemas.ts";
+import type { InfoConfig } from "./_base/mod.ts";
 
 // -------------------- Schemas --------------------
 
@@ -10,77 +10,77 @@ import type { InfoConfig } from './_base/mod.ts'
 export const RfqStatusRequest = v.pipe(
   v.object({
     /** RFQ ID. */
-    rfqId: v.pipe(NonEmptyString, v.description('RFQ ID.')),
+    rfqId: v.pipe(NonEmptyString, v.description("RFQ ID.")),
   }),
-  v.description('Request RFQ status by RFQ ID.'),
-)
-export type RfqStatusRequest = v.InferOutput<typeof RfqStatusRequest>
+  v.description("Request RFQ status by RFQ ID."),
+);
+export type RfqStatusRequest = v.InferOutput<typeof RfqStatusRequest>;
 
 /** Request parameters for the {@linkcode rfqStatus} function. */
-export type RfqStatusParameters = v.InferInput<typeof RfqStatusRequest>
+export type RfqStatusParameters = v.InferInput<typeof RfqStatusRequest>;
 
 /** RFQ lifecycle status. */
 export type RfqStatus =
-  | 'created'
-  | 'sent_to_qps'
-  | 'quotes_received'
-  | 'no_quotes'
-  | 'expired'
-  | 'accepted'
-  | 'executed'
-  | 'failed'
+  | "created"
+  | "sent_to_qps"
+  | "quotes_received"
+  | "no_quotes"
+  | "expired"
+  | "accepted"
+  | "executed"
+  | "failed";
 
 /** RFQ leg in a status response. */
 export type RfqLeg = {
   /** Instrument symbol. */
-  instrument: string
+  instrument: string;
   /** Requested side. */
-  side: Side
+  side: Side;
   /** Requested size. */
-  size: Decimal
-}
+  size: Decimal;
+};
 
 /** One quoted RFQ leg. */
 export type RfqQuoteLeg = {
   /** Instrument symbol. */
-  instrument: string
+  instrument: string;
   /** Quote side. */
-  side: Side
+  side: Side;
   /** Quote price. */
-  price: Decimal
+  price: Decimal;
   /** Quote size. */
-  size: Decimal
-}
+  size: Decimal;
+};
 
 /** One quote returned for an RFQ. */
 export type RfqQuote = {
   /** Quote ID. */
-  quote_id: string
+  quote_id: string;
   /** Net premium for the whole quote. */
-  net_premium: Decimal
+  net_premium: Decimal;
   /** Per-leg quote details. */
-  legs: RfqQuoteLeg[]
+  legs: RfqQuoteLeg[];
   /** Quote expiry timestamp in milliseconds since epoch. */
-  expires_at: number
-}
+  expires_at: number;
+};
 
 /** RFQ status response. */
 export type RfqStatusResponse = {
   /** RFQ ID. */
-  rfq_id: string
+  rfq_id: string;
   /** Current RFQ status. */
-  status: RfqStatus
+  status: RfqStatus;
   /** RFQ underlying. */
-  underlying: string
+  underlying: string;
   /** Requested RFQ legs. */
-  legs: RfqLeg[]
+  legs: RfqLeg[];
   /** Quotes received for this RFQ. */
-  quotes: RfqQuote[]
+  quotes: RfqQuote[];
   /** RFQ creation timestamp in milliseconds since epoch. */
-  created_at: number
+  created_at: number;
   /** RFQ expiry timestamp in milliseconds since epoch. */
-  expires_at: number
-}
+  expires_at: number;
+};
 
 /**
  * Request RFQ status and quotes by RFQ ID.
@@ -112,11 +112,11 @@ export function rfqStatus(
   params: RfqStatusParameters,
   signal?: AbortSignal,
 ): Promise<RfqStatusResponse> {
-  const request = parse(RfqStatusRequest, params)
+  const request = parse(RfqStatusRequest, params);
 
   return config.transport.request<RfqStatusResponse>(
     `/rfq/${encodeURIComponent(request.rfqId)}`,
     {},
     signal,
-  )
+  );
 }

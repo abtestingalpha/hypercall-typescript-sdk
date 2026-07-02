@@ -1,34 +1,34 @@
-import * as v from '@valibot/valibot'
+import * as v from "@valibot/valibot";
 
-import type { Address } from './_base/_schemas.ts'
-import type { InfoConfig } from './_base/mod.ts'
+import type { Address } from "./_base/_schemas.ts";
+import type { InfoConfig } from "./_base/mod.ts";
 
 // -------------------- Schemas --------------------
 
 /** Request exchange metadata. */
 export const ExchangeInfoRequest = v.pipe(
   v.object({}),
-  v.description('Request exchange metadata.'),
-)
-export type ExchangeInfoRequest = v.InferOutput<typeof ExchangeInfoRequest>
+  v.description("Request exchange metadata."),
+);
+export type ExchangeInfoRequest = v.InferOutput<typeof ExchangeInfoRequest>;
 
 /** EIP-712 signing domain metadata. */
 export type SigningDomainInfo = {
   /** Domain name. */
-  name: string
+  name: string;
   /** Domain version. */
-  version: string
-}
+  version: string;
+};
 
 /** Public exchange metadata used for funding and signing. */
 export type ExchangeInfoResponse = {
   /** Exchange contract address on HyperEVM. */
-  exchange_address: Address
+  exchange_address: Address;
   /** Chain ID for EIP-712 signing. */
-  chain_id: number
+  chain_id: number;
   /** EIP-712 signing domain info. */
-  signing_domain: SigningDomainInfo
-}
+  signing_domain: SigningDomainInfo;
+};
 
 /**
  * Request exchange metadata.
@@ -55,5 +55,5 @@ export function exchangeInfo(
   config: InfoConfig,
   signal?: AbortSignal,
 ): Promise<ExchangeInfoResponse> {
-  return config.transport.request<ExchangeInfoResponse>('/exchange-info', {}, signal)
+  return config.transport.request<ExchangeInfoResponse>("/exchange-info", {}, signal);
 }

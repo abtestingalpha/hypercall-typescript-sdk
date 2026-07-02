@@ -3,98 +3,98 @@
  * @module
  */
 
-import type { ExchangeConfig } from './_methods/_base/mod.ts'
+import type { ExchangeConfig } from "./_methods/_base/mod.ts";
 import {
   acceptRfqQuote,
   type AcceptRfqQuoteOptions,
   type AcceptRfqQuoteParameters,
   type AcceptRfqQuoteResponse,
-} from './_methods/acceptRfqQuote.ts'
+} from "./_methods/acceptRfqQuote.ts";
 import {
   approveAgent,
   type ApproveAgentOptions,
   type ApproveAgentParameters,
   type ApproveAgentResponse,
-} from './_methods/approveAgent.ts'
+} from "./_methods/approveAgent.ts";
 import {
   bulkCancelOrders,
   type BulkCancelOrdersOptions,
   type BulkCancelOrdersParameters,
   type BulkCancelOrdersResponse,
-} from './_methods/bulkCancelOrders.ts'
+} from "./_methods/bulkCancelOrders.ts";
 import {
   bulkCancelOrdersByClientId,
   type BulkCancelOrdersByClientIdOptions,
   type BulkCancelOrdersByClientIdParameters,
   type BulkCancelOrdersByClientIdResponse,
-} from './_methods/bulkCancelOrdersByClientId.ts'
+} from "./_methods/bulkCancelOrdersByClientId.ts";
 import {
   cancelOrder,
   type CancelOrderOptions,
   type CancelOrderParameters,
   type CancelOrderResponse,
-} from './_methods/cancelOrder.ts'
+} from "./_methods/cancelOrder.ts";
 import {
   cancelOrderByClientId,
   type CancelOrderByClientIdOptions,
   type CancelOrderByClientIdParameters,
   type CancelOrderByClientIdResponse,
-} from './_methods/cancelOrderByClientId.ts'
+} from "./_methods/cancelOrderByClientId.ts";
 import {
   placeOrder,
   type PlaceOrderOptions,
   type PlaceOrderParameters,
   type PlaceOrderResponse,
-} from './_methods/placeOrder.ts'
+} from "./_methods/placeOrder.ts";
 import {
   replaceOrder,
   type ReplaceOrderOptions,
   type ReplaceOrderParameters,
   type ReplaceOrderResponse,
-} from './_methods/replaceOrder.ts'
+} from "./_methods/replaceOrder.ts";
 import {
   revokeAgent,
   type RevokeAgentOptions,
   type RevokeAgentParameters,
   type RevokeAgentResponse,
-} from './_methods/revokeAgent.ts'
+} from "./_methods/revokeAgent.ts";
 import {
   setMarginMode,
   type SetMarginModeOptions,
   type SetMarginModeParameters,
   type SetMarginModeResponse,
-} from './_methods/setMarginMode.ts'
+} from "./_methods/setMarginMode.ts";
 import {
   setSettlementPayoutsSeen,
   type SetSettlementPayoutsSeenOptions,
   type SetSettlementPayoutsSeenParameters,
   type SetSettlementPayoutsSeenResponse,
-} from './_methods/setSettlementPayoutsSeen.ts'
+} from "./_methods/setSettlementPayoutsSeen.ts";
 import {
   submitStandardMarginLiquidation,
   type SubmitStandardMarginLiquidationOptions,
   type SubmitStandardMarginLiquidationParameters,
   type SubmitStandardMarginLiquidationResponse,
-} from './_methods/submitStandardMarginLiquidation.ts'
+} from "./_methods/submitStandardMarginLiquidation.ts";
 import {
   submitRfq,
   type SubmitRfqOptions,
   type SubmitRfqParameters,
   type SubmitRfqResponse,
-} from './_methods/submitRfq.ts'
+} from "./_methods/submitRfq.ts";
 import {
   withdrawUsdc,
   type WithdrawUsdcOptions,
   type WithdrawUsdcParameters,
   type WithdrawUsdcResponse,
-} from './_methods/withdrawUsdc.ts'
+} from "./_methods/withdrawUsdc.ts";
 
 /** A client for interacting with signed Hypercall Exchange API methods. */
 export class ExchangeClient<C extends ExchangeConfig = ExchangeConfig> {
-  config_: C
+  config_: C;
 
   constructor(config: C) {
-    this.config_ = config
+    this.config_ = config;
   }
 
   /**
@@ -126,7 +126,7 @@ export class ExchangeClient<C extends ExchangeConfig = ExchangeConfig> {
    * @see https://docs.hypercall.xyz/docs/trading/over-api/
    */
   approveAgent(params: ApproveAgentParameters, opts?: ApproveAgentOptions): Promise<ApproveAgentResponse> {
-    return approveAgent(this.config_, params, opts)
+    return approveAgent(this.config_, params, opts);
   }
 
   /**
@@ -159,7 +159,7 @@ export class ExchangeClient<C extends ExchangeConfig = ExchangeConfig> {
    * @see https://docs.hypercall.xyz/docs/trading/over-api/
    */
   cancelOrder(params: CancelOrderParameters, opts?: CancelOrderOptions): Promise<CancelOrderResponse> {
-    return cancelOrder(this.config_, params, opts)
+    return cancelOrder(this.config_, params, opts);
   }
 
   /**
@@ -195,7 +195,7 @@ export class ExchangeClient<C extends ExchangeConfig = ExchangeConfig> {
     params: CancelOrderByClientIdParameters,
     opts?: CancelOrderByClientIdOptions,
   ): Promise<CancelOrderByClientIdResponse> {
-    return cancelOrderByClientId(this.config_, params, opts)
+    return cancelOrderByClientId(this.config_, params, opts);
   }
 
   /**
@@ -233,7 +233,7 @@ export class ExchangeClient<C extends ExchangeConfig = ExchangeConfig> {
     params: BulkCancelOrdersParameters,
     opts?: BulkCancelOrdersOptions,
   ): Promise<BulkCancelOrdersResponse> {
-    return bulkCancelOrders(this.config_, params, opts)
+    return bulkCancelOrders(this.config_, params, opts);
   }
 
   /**
@@ -271,7 +271,7 @@ export class ExchangeClient<C extends ExchangeConfig = ExchangeConfig> {
     params: BulkCancelOrdersByClientIdParameters,
     opts?: BulkCancelOrdersByClientIdOptions,
   ): Promise<BulkCancelOrdersByClientIdResponse> {
-    return bulkCancelOrdersByClientId(this.config_, params, opts)
+    return bulkCancelOrdersByClientId(this.config_, params, opts);
   }
 
   /**
@@ -310,7 +310,7 @@ export class ExchangeClient<C extends ExchangeConfig = ExchangeConfig> {
    * @see https://docs.hypercall.xyz/docs/trading/over-api/
    */
   placeOrder(params: PlaceOrderParameters, opts?: PlaceOrderOptions): Promise<PlaceOrderResponse> {
-    return placeOrder(this.config_, params, opts)
+    return placeOrder(this.config_, params, opts);
   }
 
   /**
@@ -349,7 +349,7 @@ export class ExchangeClient<C extends ExchangeConfig = ExchangeConfig> {
    * @see https://docs.hypercall.xyz/docs/trading/over-api/
    */
   replaceOrder(params: ReplaceOrderParameters, opts?: ReplaceOrderOptions): Promise<ReplaceOrderResponse> {
-    return replaceOrder(this.config_, params, opts)
+    return replaceOrder(this.config_, params, opts);
   }
 
   /**
@@ -382,7 +382,7 @@ export class ExchangeClient<C extends ExchangeConfig = ExchangeConfig> {
    * @see https://docs.hypercall.xyz/docs/trading/over-api/
    */
   setMarginMode(params: SetMarginModeParameters, opts?: SetMarginModeOptions): Promise<SetMarginModeResponse> {
-    return setMarginMode(this.config_, params, opts)
+    return setMarginMode(this.config_, params, opts);
   }
 
   /**
@@ -414,7 +414,7 @@ export class ExchangeClient<C extends ExchangeConfig = ExchangeConfig> {
    * @see https://docs.hypercall.xyz/docs/trading/over-api/
    */
   revokeAgent(params: RevokeAgentParameters, opts?: RevokeAgentOptions): Promise<RevokeAgentResponse> {
-    return revokeAgent(this.config_, params, opts)
+    return revokeAgent(this.config_, params, opts);
   }
 
   /**
@@ -450,7 +450,7 @@ export class ExchangeClient<C extends ExchangeConfig = ExchangeConfig> {
     params: SetSettlementPayoutsSeenParameters,
     opts?: SetSettlementPayoutsSeenOptions,
   ): Promise<SetSettlementPayoutsSeenResponse> {
-    return setSettlementPayoutsSeen(this.config_, params, opts)
+    return setSettlementPayoutsSeen(this.config_, params, opts);
   }
 
   /**
@@ -486,7 +486,7 @@ export class ExchangeClient<C extends ExchangeConfig = ExchangeConfig> {
    * @see https://docs.hypercall.xyz/docs/trading/over-api/
    */
   withdrawUsdc(params: WithdrawUsdcParameters, opts?: WithdrawUsdcOptions): Promise<WithdrawUsdcResponse> {
-    return withdrawUsdc(this.config_, params, opts)
+    return withdrawUsdc(this.config_, params, opts);
   }
 
   /**
@@ -520,7 +520,7 @@ export class ExchangeClient<C extends ExchangeConfig = ExchangeConfig> {
    * @see https://docs.hypercall.xyz/docs/trading/over-api/
    */
   submitRfq(params: SubmitRfqParameters, opts?: SubmitRfqOptions): Promise<SubmitRfqResponse> {
-    return submitRfq(this.config_, params, opts)
+    return submitRfq(this.config_, params, opts);
   }
 
   /**
@@ -557,7 +557,7 @@ export class ExchangeClient<C extends ExchangeConfig = ExchangeConfig> {
     params: AcceptRfqQuoteParameters,
     opts?: AcceptRfqQuoteOptions,
   ): Promise<AcceptRfqQuoteResponse> {
-    return acceptRfqQuote(this.config_, params, opts)
+    return acceptRfqQuote(this.config_, params, opts);
   }
 
   /**
@@ -602,61 +602,61 @@ export class ExchangeClient<C extends ExchangeConfig = ExchangeConfig> {
     params: SubmitStandardMarginLiquidationParameters,
     opts?: SubmitStandardMarginLiquidationOptions,
   ): Promise<SubmitStandardMarginLiquidationResponse> {
-    return submitStandardMarginLiquidation(this.config_, params, opts)
+    return submitStandardMarginLiquidation(this.config_, params, opts);
   }
 }
 
-export type { ExchangeConfig, ExchangeRequestOptions } from './_methods/_base/mod.ts'
-export type { OrderUpdateInfo, OrderUpdateMessage } from './_methods/_base/order.ts'
+export type { ExchangeConfig, ExchangeRequestOptions } from "./_methods/_base/mod.ts";
+export type { OrderUpdateInfo, OrderUpdateMessage } from "./_methods/_base/order.ts";
 export type {
   AcceptRfqQuoteOptions,
   AcceptRfqQuoteParameters,
   AcceptRfqQuoteRequest,
   AcceptRfqQuoteResponse,
-} from './_methods/acceptRfqQuote.ts'
+} from "./_methods/acceptRfqQuote.ts";
 export type {
   ApproveAgentOptions,
   ApproveAgentParameters,
   ApproveAgentRequest,
   ApproveAgentResponse,
-} from './_methods/approveAgent.ts'
+} from "./_methods/approveAgent.ts";
 export type {
   BulkCancelOrderResult,
   BulkCancelOrdersOptions,
   BulkCancelOrdersParameters,
   BulkCancelOrdersRequest,
   BulkCancelOrdersResponse,
-} from './_methods/bulkCancelOrders.ts'
+} from "./_methods/bulkCancelOrders.ts";
 export type {
   BulkCancelOrdersByClientIdOptions,
   BulkCancelOrdersByClientIdParameters,
   BulkCancelOrdersByClientIdRequest,
   BulkCancelOrdersByClientIdResponse,
-} from './_methods/bulkCancelOrdersByClientId.ts'
+} from "./_methods/bulkCancelOrdersByClientId.ts";
 export type {
   CancelOrderOptions,
   CancelOrderParameters,
   CancelOrderRequest,
   CancelOrderResponse,
-} from './_methods/cancelOrder.ts'
+} from "./_methods/cancelOrder.ts";
 export type {
   CancelOrderByClientIdOptions,
   CancelOrderByClientIdParameters,
   CancelOrderByClientIdRequest,
   CancelOrderByClientIdResponse,
-} from './_methods/cancelOrderByClientId.ts'
+} from "./_methods/cancelOrderByClientId.ts";
 export type {
   PlaceOrderOptions,
   PlaceOrderParameters,
   PlaceOrderRequest,
   PlaceOrderResponse,
-} from './_methods/placeOrder.ts'
+} from "./_methods/placeOrder.ts";
 export type {
   ReplaceOrderOptions,
   ReplaceOrderParameters,
   ReplaceOrderRequest,
   ReplaceOrderResponse,
-} from './_methods/replaceOrder.ts'
+} from "./_methods/replaceOrder.ts";
 export type {
   MarginModeResponse,
   MarginModeSelection,
@@ -664,19 +664,19 @@ export type {
   SetMarginModeParameters,
   SetMarginModeRequest,
   SetMarginModeResponse,
-} from './_methods/setMarginMode.ts'
+} from "./_methods/setMarginMode.ts";
 export type {
   RevokeAgentOptions,
   RevokeAgentParameters,
   RevokeAgentRequest,
   RevokeAgentResponse,
-} from './_methods/revokeAgent.ts'
+} from "./_methods/revokeAgent.ts";
 export type {
   SetSettlementPayoutsSeenOptions,
   SetSettlementPayoutsSeenParameters,
   SetSettlementPayoutsSeenRequest,
   SetSettlementPayoutsSeenResponse,
-} from './_methods/setSettlementPayoutsSeen.ts'
+} from "./_methods/setSettlementPayoutsSeen.ts";
 export type {
   StandardMarginLiquidationOrderResponse,
   StandardMarginLiquidationPositionRequest,
@@ -684,17 +684,17 @@ export type {
   SubmitStandardMarginLiquidationParameters,
   SubmitStandardMarginLiquidationRequest,
   SubmitStandardMarginLiquidationResponse,
-} from './_methods/submitStandardMarginLiquidation.ts'
+} from "./_methods/submitStandardMarginLiquidation.ts";
 export type {
   SubmitRfqLeg,
   SubmitRfqOptions,
   SubmitRfqParameters,
   SubmitRfqRequest,
   SubmitRfqResponse,
-} from './_methods/submitRfq.ts'
+} from "./_methods/submitRfq.ts";
 export type {
   WithdrawUsdcOptions,
   WithdrawUsdcParameters,
   WithdrawUsdcRequest,
   WithdrawUsdcResponse,
-} from './_methods/withdrawUsdc.ts'
+} from "./_methods/withdrawUsdc.ts";

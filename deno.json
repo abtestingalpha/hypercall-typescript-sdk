@@ -9,13 +9,27 @@
     "./signing": "./src/signing/mod.ts"
   },
   "imports": {
+    "@hypercall/sdk": "./src/mod.ts",
+    "@hypercall/sdk/api/exchange": "./src/api/exchange/mod.ts",
+    "@hypercall/sdk/api/info": "./src/api/info/mod.ts",
+    "@hypercall/sdk/signing": "./src/signing/mod.ts",
     "@valibot/valibot": "jsr:@valibot/valibot@^1.4.1"
   },
   "tasks": {
-    "check": "deno fmt --check && deno lint && deno check --doc"
+    "check": "deno fmt --check && deno lint && deno check src/mod.ts && deno test --no-run",
+    "test": "deno test",
+    "example": "deno run --allow-net",
+    "build:npm": "deno run -A .github/scripts/build_npm.ts",
+    "pack:npm": "deno task build:npm && cd dist && npm pack --json",
+    "publish:npm:dry": "deno task build:npm && cd dist && npm publish --dry-run --access public"
   },
   "fmt": {
     "lineWidth": 120
+  },
+  "lint": {
+    "rules": {
+      "exclude": ["no-slow-types"]
+    }
   },
   "lock": false
 }

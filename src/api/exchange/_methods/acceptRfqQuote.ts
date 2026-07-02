@@ -1,8 +1,8 @@
-import * as v from '@valibot/valibot'
+import * as v from "@valibot/valibot";
 
-import { NonEmptyString, NonNegativeInteger, parse, WalletAddress } from '../../_base.ts'
-import type { RfqStatus } from '../../info/_methods/rfq.ts'
-import type { ExchangeConfig, ExchangeRequestOptions } from './_base/mod.ts'
+import { NonEmptyString, NonNegativeInteger, parse, WalletAddress } from "../../_base.ts";
+import type { RfqStatus } from "../../info/_methods/rfq.ts";
+import type { ExchangeConfig, ExchangeRequestOptions } from "./_base/mod.ts";
 
 // -------------------- Schemas --------------------
 
@@ -10,37 +10,37 @@ import type { ExchangeConfig, ExchangeRequestOptions } from './_base/mod.ts'
 export const AcceptRfqQuoteRequest = v.pipe(
   v.object({
     /** RFQ ID. */
-    rfq_id: v.pipe(NonEmptyString, v.description('RFQ ID.')),
+    rfq_id: v.pipe(NonEmptyString, v.description("RFQ ID.")),
     /** Quote ID. */
-    quote_id: v.pipe(NonEmptyString, v.description('Quote ID.')),
+    quote_id: v.pipe(NonEmptyString, v.description("Quote ID.")),
     /** Wallet performing the action. */
-    wallet_address: v.pipe(WalletAddress, v.description('Wallet address.')),
+    wallet_address: v.pipe(WalletAddress, v.description("Wallet address.")),
     /** Nonce used in the EIP-712 signature. */
-    nonce: v.pipe(NonNegativeInteger, v.description('Signature nonce.')),
+    nonce: v.pipe(NonNegativeInteger, v.description("Signature nonce.")),
     /** EIP-712 signature. */
-    signature: v.pipe(NonEmptyString, v.description('EIP-712 signature.')),
+    signature: v.pipe(NonEmptyString, v.description("EIP-712 signature.")),
   }),
-  v.description('Pre-signed request to accept an RFQ quote.'),
-)
-export type AcceptRfqQuoteRequest = v.InferOutput<typeof AcceptRfqQuoteRequest>
+  v.description("Pre-signed request to accept an RFQ quote."),
+);
+export type AcceptRfqQuoteRequest = v.InferOutput<typeof AcceptRfqQuoteRequest>;
 
 /** Parameters for the {@linkcode acceptRfqQuote} function. */
-export type AcceptRfqQuoteParameters = v.InferInput<typeof AcceptRfqQuoteRequest>
+export type AcceptRfqQuoteParameters = v.InferInput<typeof AcceptRfqQuoteRequest>;
 
 /** Response after accepting an RFQ quote. */
 export type AcceptRfqQuoteResponse = {
   /** RFQ ID. */
-  rfq_id: string
+  rfq_id: string;
   /** Quote ID. */
-  quote_id: string
+  quote_id: string;
   /** RFQ status after accepting the quote. */
-  status: RfqStatus
+  status: RfqStatus;
   /** Fill ID created by the accepted RFQ. */
-  fill_id: string
-}
+  fill_id: string;
+};
 
 /** Request options for the {@linkcode acceptRfqQuote} function. */
-export type AcceptRfqQuoteOptions = ExchangeRequestOptions
+export type AcceptRfqQuoteOptions = ExchangeRequestOptions;
 
 /**
  * Accept an RFQ quote using a pre-signed Hypercall EIP-712 payload.
@@ -78,17 +78,17 @@ export function acceptRfqQuote(
   params: AcceptRfqQuoteParameters,
   opts?: AcceptRfqQuoteOptions,
 ): Promise<AcceptRfqQuoteResponse> {
-  const request = parse(AcceptRfqQuoteRequest, params)
+  const request = parse(AcceptRfqQuoteRequest, params);
 
   return config.transport.request<AcceptRfqQuoteResponse>(
-    '/rfq/accept',
+    "/rfq/accept",
     {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'content-type': 'application/json',
+        "content-type": "application/json",
       },
       body: JSON.stringify(request),
     },
     opts?.signal,
-  )
+  );
 }

@@ -1,97 +1,96 @@
-import * as v from '@valibot/valibot'
+import * as v from "@valibot/valibot";
 
-import { parse } from '../../_base.ts'
-import type { Address, Decimal, ListResponse } from './_base/_schemas.ts'
-import { toQuery, type InfoConfig } from './_base/mod.ts'
+import { parse } from "../../_base.ts";
+import type { Address, Decimal, ListResponse } from "./_base/_schemas.ts";
+import { type InfoConfig, toQuery } from "./_base/mod.ts";
 
 // -------------------- Schemas --------------------
 
 /** Request listed markets. */
-export const MarketsRequest = v.pipe(
-  v.object({
+export const MarketsRequest = /* @__PURE__ */ (() => {
+  return v.object({
     /** Include instrument details in each market. */
-    include_instruments: v.pipe(
-      v.optional(v.boolean()),
-      v.description('Include instrument details in each market.'),
-    ),
-  }),
-  v.description('Request listed markets.'),
-)
-export type MarketsRequest = v.InferOutput<typeof MarketsRequest>
+    include_instruments: v.optional(v.boolean()),
+  });
+})();
+export type MarketsRequest = v.InferOutput<typeof MarketsRequest>;
 
 /** Request parameters for the {@linkcode markets} function. */
-export type MarketsParameters = v.InferInput<typeof MarketsRequest>
+export type MarketsParameters = {
+  /** Include instrument details in each market. */
+  include_instruments?: boolean;
+};
 
 /** Request parameters that return slim markets without instrument details. */
 export type MarketsSlimParameters = MarketsParameters & {
   /** Disable instrument details in each market. */
-  include_instruments: false
-}
+  include_instruments: false;
+};
 
 /** Lifecycle state of a listed instrument. */
-export type InstrumentStatus = 'ACTIVE' | 'EXPIRED_PENDING_PRICE' | 'SETTLED'
+export type InstrumentStatus = "ACTIVE" | "EXPIRED_PENDING_PRICE" | "SETTLED";
 
 /** Public market instrument metadata. */
 export type MarketInstrument = {
   /** Numeric instrument identifier. */
-  instrument_id: number
+  instrument_id: number;
   /** Human-readable instrument symbol. */
-  id: string
+  id: string;
   /** Underlying asset. */
-  underlying: string
+  underlying: string;
   /** Strike price in USD. */
-  strike: Decimal
+  strike: Decimal;
   /** Expiry timestamp in seconds since epoch. */
-  expiry: number
+  expiry: number;
   /** Option type. */
-  option_type: 'call' | 'put'
+  option_type: "call" | "put";
   /** On-chain option token contract address, if deployed. */
-  option_token_address: Address | null
+  option_token_address: Address | null;
   /** Mark implied volatility as a decimal. */
-  mark_iv: Decimal | null
+  mark_iv: Decimal | null;
   /** Rolling 24-hour traded volume in contracts. */
-  volume_24h: Decimal
+  volume_24h: Decimal;
   /** Total open interest in contracts. */
-  open_interest: Decimal
+  open_interest: Decimal;
   /** Last refresh timestamp. */
-  updated_at: string
+  updated_at: string;
   /** Current lifecycle state. */
-  status: InstrumentStatus
+  status: InstrumentStatus;
   /** Trading mode flags for this instrument. */
-  trading_mode: string
-}
+  trading_mode: string;
+};
 
 /** Full market summary for one underlying and expiry. */
 export type Market = {
   /** Underlying asset. */
-  underlying: string
+  underlying: string;
   /** Expiry timestamp in seconds since epoch. */
-  expiry: number
+  expiry: number;
   /** Current spot/index price of the underlying in USD. */
-  index_price: Decimal
+  index_price: Decimal;
   /** At-the-money implied volatility as a decimal, if available. */
-  atm_vol: Decimal | null
+  atm_vol: Decimal | null;
   /** Instruments listed under this underlying/expiry pair. */
-  instruments: MarketInstrument[]
+  instruments: MarketInstrument[];
   /** Aggregate 24-hour traded volume across all instruments. */
-  total_volume_24h: Decimal
+  total_volume_24h: Decimal;
   /** Aggregate open interest across all instruments. */
-  total_open_interest: Decimal
+  total_open_interest: Decimal;
   /** Previous day's closing index price in USD, if available. */
-  prev_day_price?: Decimal | null
-}
+  prev_day_price?: Decimal | null;
+};
 
 /** Slim market summary without instrument details. */
-export type MarketSlim = Omit<Market, 'instruments' | 'prev_day_price'> & {
+export type MarketSlim = Omit<Market, "instruments" | "prev_day_price"> & {
   /** Previous day's closing index price in USD, if available. */
-  prev_day_px?: Decimal | null
-}
+  prev_day_px?: Decimal | null;
+};
 
 /** Listed markets response with instruments included. */
-export type MarketsResponse = ListResponse<Market>
+export type MarketsResponse = ListResponse<Market>;
 
 /** Listed markets response without instrument details. */
-export type MarketsSlimResponse = ListResponse<MarketSlim>
+export type MarketsSlimResponse = ListResponse<MarketSlim>;
 
 /**
  * Request listed markets.
@@ -120,29 +119,29 @@ export function markets(
   config: InfoConfig,
   params: MarketsSlimParameters,
   signal?: AbortSignal,
-): Promise<MarketsSlimResponse>
+): Promise<MarketsSlimResponse>;
 export function markets(
   config: InfoConfig,
   params?: MarketsParameters,
   signal?: AbortSignal,
-): Promise<MarketsResponse>
+): Promise<MarketsResponse>;
 export function markets(
   config: InfoConfig,
   signal?: AbortSignal,
-): Promise<MarketsResponse>
+): Promise<MarketsResponse>;
 export function markets(
   config: InfoConfig,
   paramsOrSignal?: MarketsParameters | AbortSignal,
   maybeSignal?: AbortSignal,
 ): Promise<MarketsResponse | MarketsSlimResponse> {
-  const params = paramsOrSignal instanceof AbortSignal ? {} : (paramsOrSignal ?? {})
-  const signal = paramsOrSignal instanceof AbortSignal ? paramsOrSignal : maybeSignal
-  const request = parse(MarketsRequest, params)
-  const query = toQuery({ include_instruments: request.include_instruments })
+  const params = paramsOrSignal instanceof AbortSignal ? {} : (paramsOrSignal ?? {});
+  const signal = paramsOrSignal instanceof AbortSignal ? paramsOrSignal : maybeSignal;
+  const request = parse(MarketsRequest, params);
+  const query = toQuery({ include_instruments: request.include_instruments });
 
   return config.transport.request<MarketsResponse | MarketsSlimResponse>(
-    query ? `/markets?${query}` : '/markets',
+    query ? `/markets?${query}` : "/markets",
     {},
     signal,
-  )
+  );
 }

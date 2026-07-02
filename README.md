@@ -20,35 +20,40 @@ pnpm add @hypercall/sdk
 For local usage before the package is published:
 
 ```bash
+cd /Users/abtestingalpha/Desktop/hypercall-typescript-sdk
+deno task pack:npm
+
 cd /Users/abtestingalpha/Desktop/hypertheta/frontend
-pnpm add @hypercall/sdk@link:/Users/abtestingalpha/Desktop/hypercall-typescript-sdk
+corepack pnpm add /Users/abtestingalpha/Desktop/hypercall-typescript-sdk/dist/hypercall-sdk-0.0.0.tgz
 ```
 
+This installs the same package shape npm consumers receive. Avoid `link:` for publish validation because it reads
+directly from the source checkout.
 
 ## Quick Start
 
 ```ts
-import { HttpTransport, InfoClient } from '@hypercall/sdk'
+import { HttpTransport, InfoClient } from "@hypercall/sdk";
 
-const transport = new HttpTransport({ apiUrl: 'https://api.hypercall.xyz' })
-const info = new InfoClient({ transport })
+const transport = new HttpTransport({ apiUrl: "https://api.hypercall.xyz" });
+const info = new InfoClient({ transport });
 
-const markets = await info.markets({ include_instruments: false })
+const markets = await info.markets({ include_instruments: false });
 
-console.log(markets.data[0]?.underlying)
+console.log(markets.data[0]?.underlying);
 ```
 
-`HttpTransport` defaults to `https://api.hypercall.xyz`. Apps that target a
-specific deploy should pass `apiUrl` from their own config.
+`HttpTransport` defaults to `https://api.hypercall.xyz`. Apps that target a specific deploy should pass `apiUrl` from
+their own config.
 
 ```ts
-const transport = new HttpTransport({ apiUrl: 'https://api.hypercall.xyz' })
+const transport = new HttpTransport({ apiUrl: "https://api.hypercall.xyz" });
 ```
 
 ## Info API Examples
 
-The Info client follows the same call shape as `@nktkas/hyperliquid`: request
-params come first, and the optional `AbortSignal` comes last.
+The Info client follows the same call shape as `@nktkas/hyperliquid`: request params come first, and the optional
+`AbortSignal` comes last.
 
 Focused runnable examples live in `examples/`:
 
@@ -64,247 +69,235 @@ Focused runnable examples live in `examples/`:
 - `signing.ts`
 - `pre-signed-writes.ts`
 
-The read examples call live API endpoints. `signing.ts` and
-`pre-signed-writes.ts` are request-shape examples and do not submit write
-actions by default.
+The read examples call live API endpoints. `signing.ts` and `pre-signed-writes.ts` are request-shape examples and do not
+submit write actions by default.
 
 Run an example with:
 
 ```bash
-corepack pnpm example examples/read-markets.ts
+deno task example examples/read-markets.ts
 ```
 
 ```ts
-import { HttpTransport, InfoClient } from '@hypercall/sdk'
+import { HttpTransport, InfoClient } from "@hypercall/sdk";
 
-const transport = new HttpTransport({ apiUrl: 'https://api.hypercall.xyz' })
-const info = new InfoClient({ transport })
+const transport = new HttpTransport({ apiUrl: "https://api.hypercall.xyz" });
+const info = new InfoClient({ transport });
 
-const controller = new AbortController()
+const controller = new AbortController();
 
 const summaries = await info.optionSummaries(
-  { currency: 'SPCX' },
+  { currency: "SPCX" },
   controller.signal,
-)
+);
 
-console.log(summaries.result?.[0]?.instrument_name)
+console.log(summaries.result?.[0]?.instrument_name);
 ```
 
 ## Exchange API Examples
 
-Exchange methods mutate state and currently accept pre-signed request payloads.
-The SDK submits and validates the request shape, while the caller owns wallet
-connection, nonce selection, and EIP-712 signing.
+Exchange methods mutate state and currently accept pre-signed request payloads. The SDK submits and validates the
+request shape, while the caller owns wallet connection, nonce selection, and EIP-712 signing.
 
-Place order note: `route` is part of the signed `PlaceOrder` payload and must
-match the `route` field sent to the API.
+Place order note: `route` is part of the signed `PlaceOrder` payload and must match the `route` field sent to the API.
 
 ```ts
-import { ExchangeClient, HttpTransport } from '@hypercall/sdk'
+import { ExchangeClient, HttpTransport } from "@hypercall/sdk";
 
-const transport = new HttpTransport({ apiUrl: 'https://api.hypercall.xyz' })
-const exchange = new ExchangeClient({ transport })
+const transport = new HttpTransport({ apiUrl: "https://api.hypercall.xyz" });
+const exchange = new ExchangeClient({ transport });
 
 const response = await exchange.setSettlementPayoutsSeen({
-  wallet: '0x0000000000000000000000000000000000000000',
+  wallet: "0x0000000000000000000000000000000000000000",
   ids: [123],
   nonce: 1,
-  signature: '0x...',
-})
+  signature: "0x...",
+});
 
-console.log(response.success)
-console.log(response.affected)
+console.log(response.success);
+console.log(response.affected);
 ```
 
 ```ts
 const approved = await exchange.approveAgent({
-  agent: '0x0000000000000000000000000000000000000000',
+  agent: "0x0000000000000000000000000000000000000000",
   nonce: 1,
-  signature: '0x...',
-})
+  signature: "0x...",
+});
 
-console.log(approved.success)
+console.log(approved.success);
 ```
 
 ```ts
 const placed = await exchange.placeOrder({
-  wallet: '0x0000000000000000000000000000000000000000',
-  symbol: 'BTC-30JUN26-100000-C',
-  side: 'Buy',
-  size: '0.1',
-  price: '100',
-  tif: 'gtc',
-  route: 'best_execution',
-  client_id: 'client-123',
+  wallet: "0x0000000000000000000000000000000000000000",
+  symbol: "BTC-30JUN26-100000-C",
+  side: "Buy",
+  size: "0.1",
+  price: "100",
+  tif: "gtc",
+  route: "best_execution",
+  client_id: "client-123",
   nonce: 2,
-  signature: '0x...',
-})
+  signature: "0x...",
+});
 
-console.log(placed.status)
+console.log(placed.status);
 ```
 
 ```ts
 const replaced = await exchange.replaceOrder({
-  wallet: '0x0000000000000000000000000000000000000000',
+  wallet: "0x0000000000000000000000000000000000000000",
   order_id: 123,
-  symbol: 'BTC-30JUN26-100000-C',
-  side: 'Buy',
-  size: '0.1',
-  price: '101',
-  tif: 'gtc',
-  client_id: 'client-124',
+  symbol: "BTC-30JUN26-100000-C",
+  side: "Buy",
+  size: "0.1",
+  price: "101",
+  tif: "gtc",
+  client_id: "client-124",
   nonce: 3,
-  signature: '0x...',
-})
+  signature: "0x...",
+});
 
-console.log(replaced.status)
+console.log(replaced.status);
 ```
 
 ```ts
 const marginMode = await exchange.setMarginMode({
-  wallet: '0x0000000000000000000000000000000000000000',
-  margin_mode: 'standard',
+  wallet: "0x0000000000000000000000000000000000000000",
+  margin_mode: "standard",
   nonce: 4,
-  signature: '0x...',
-})
+  signature: "0x...",
+});
 
-console.log(marginMode.success)
+console.log(marginMode.success);
 ```
 
 ```ts
 const canceled = await exchange.cancelOrder({
-  wallet: '0x0000000000000000000000000000000000000000',
+  wallet: "0x0000000000000000000000000000000000000000",
   order_id: 123,
   nonce: 5,
-  signature: '0x...',
-})
+  signature: "0x...",
+});
 
-console.log(canceled.success)
+console.log(canceled.success);
 ```
 
 ```ts
 const bulkCanceled = await exchange.bulkCancelOrdersByClientId({
   cancels: [{
-    wallet: '0x0000000000000000000000000000000000000000',
-    client_id: 'client-123',
+    wallet: "0x0000000000000000000000000000000000000000",
+    client_id: "client-123",
     nonce: 6,
-    signature: '0x...',
+    signature: "0x...",
   }],
-})
+});
 
-console.log(bulkCanceled.results[0]?.success)
+console.log(bulkCanceled.results[0]?.success);
 ```
 
 ## Signing Helpers
 
-The signing subpath exposes EIP-712 maps and value builders for public SDK
-write actions. Product-local profile, username, and notification helpers live
-in the Hypercall frontend instead of this package. Pass the chain id from your
+The signing subpath exposes EIP-712 maps and value builders for public SDK write actions. Product-local profile,
+username, and notification helpers live in the Hypercall frontend instead of this package. Pass the chain id from your
 app environment.
 
 ```ts
-import {
-  APPROVE_AGENT_TYPES,
-  buildApproveAgentValue,
-  buildTypedData,
-} from '@hypercall/sdk/signing'
+import { APPROVE_AGENT_TYPES, buildApproveAgentValue, buildTypedData } from "@hypercall/sdk/signing";
 
 const message = buildApproveAgentValue(
-  '0x0000000000000000000000000000000000000000',
+  "0x0000000000000000000000000000000000000000",
   1,
-)
+);
 
 const typedData = buildTypedData({
   chainId: 999,
-  primaryType: 'ApproveAgent',
+  primaryType: "ApproveAgent",
   types: APPROVE_AGENT_TYPES,
   message,
-})
+});
 
-console.log(typedData.primaryType)
+console.log(typedData.primaryType);
 ```
 
 ```ts
-import {
-  PLACE_ORDER_TYPES,
-  buildPlaceOrderValue,
-  buildTypedData,
-} from '@hypercall/sdk/signing'
+import { buildPlaceOrderValue, buildTypedData, PLACE_ORDER_TYPES } from "@hypercall/sdk/signing";
 
 const order = buildPlaceOrderValue({
-  wallet: '0x0000000000000000000000000000000000000000',
-  symbol: 'BTC-30JUN26-100000-C',
-  side: 'Buy',
-  size: '0.1',
-  price: '100',
-  tif: 'gtc',
-  route: 'book_only',
-  clientId: 'client-123',
+  wallet: "0x0000000000000000000000000000000000000000",
+  symbol: "BTC-30JUN26-100000-C",
+  side: "Buy",
+  size: "0.1",
+  price: "100",
+  tif: "gtc",
+  route: "book_only",
+  clientId: "client-123",
   nonce: 2,
-})
+});
 
 const orderTypedData = buildTypedData({
   chainId: 999,
-  primaryType: 'PlaceOrder',
+  primaryType: "PlaceOrder",
   types: PLACE_ORDER_TYPES,
   message: order,
-})
+});
 
-console.log(orderTypedData.message.route)
+console.log(orderTypedData.message.route);
 ```
 
 ### Exchange Metadata
 
 ```ts
-const exchange = await info.exchangeInfo()
+const exchange = await info.exchangeInfo();
 
-console.log(exchange.exchange_address)
-console.log(exchange.chain_id)
-console.log(exchange.signing_domain.name)
+console.log(exchange.exchange_address);
+console.log(exchange.chain_id);
+console.log(exchange.signing_domain.name);
 ```
 
 ### Markets
 
 ```ts
-const slimMarkets = await info.markets({ include_instruments: false })
-const fullMarkets = await info.markets()
+const slimMarkets = await info.markets({ include_instruments: false });
+const fullMarkets = await info.markets();
 
-console.log(slimMarkets.data[0]?.underlying)
-console.log(fullMarkets.data[0]?.instruments[0]?.id)
+console.log(slimMarkets.data[0]?.underlying);
+console.log(fullMarkets.data[0]?.instruments[0]?.id);
 ```
 
 ### Instruments
 
 ```ts
-const instruments = await info.instruments({ currency: 'SPCX' })
+const instruments = await info.instruments({ currency: "SPCX" });
 
-console.log(instruments.result?.[0]?.instrument_id)
-console.log(instruments.result?.[0]?.instrument_name)
+console.log(instruments.result?.[0]?.instrument_id);
+console.log(instruments.result?.[0]?.instrument_name);
 ```
 
 ### Option Summaries
 
 ```ts
-const summaries = await info.optionSummaries({ currency: 'SPCX' })
+const summaries = await info.optionSummaries({ currency: "SPCX" });
 
-console.log(summaries.result?.[0]?.mark_price)
-console.log(summaries.result?.[0]?.greeks?.delta)
+console.log(summaries.result?.[0]?.mark_price);
+console.log(summaries.result?.[0]?.greeks?.delta);
 ```
 
 ### Orderbook
 
 ```ts
-const instruments = await info.instruments({ currency: 'SPCX' })
-const instrument = instruments.result?.[0]
+const instruments = await info.instruments({ currency: "SPCX" });
+const instrument = instruments.result?.[0];
 
 if (instrument) {
   const book = await info.orderbook({
     instrumentId: instrument.instrument_id,
     depth: 15,
-  })
+  });
 
-  console.log(book.result?.bids[0])
-  console.log(book.result?.asks[0])
+  console.log(book.result?.bids[0]);
+  console.log(book.result?.asks[0]);
 }
 ```
 
@@ -312,154 +305,154 @@ if (instrument) {
 
 ```ts
 const portfolio = await info.portfolio({
-  wallet: '0xe55b5e5e38f73c30aa367d310d6247f3f9a5e86e',
-})
+  wallet: "0xe55b5e5e38f73c30aa367d310d6247f3f9a5e86e",
+});
 
-console.log(portfolio.data?.available_balance)
-console.log(portfolio.data?.positions[0]?.symbol)
+console.log(portfolio.data?.available_balance);
+console.log(portfolio.data?.positions[0]?.symbol);
 ```
 
 ### Profile
 
 ```ts
 const profile = await info.profile({
-  wallet: '0xe55b5e5e38f73c30aa367d310d6247f3f9a5e86e',
-})
+  wallet: "0xe55b5e5e38f73c30aa367d310d6247f3f9a5e86e",
+});
 
-console.log(profile.data.username)
-console.log(profile.data.pnl.unrealized)
+console.log(profile.data.username);
+console.log(profile.data.pnl.unrealized);
 
 const profileTrades = await info.profileTrades({
-  wallet: '0xe55b5e5e38f73c30aa367d310d6247f3f9a5e86e',
+  wallet: "0xe55b5e5e38f73c30aa367d310d6247f3f9a5e86e",
   limit: 25,
   offset: 0,
-})
+});
 
-console.log(profileTrades.data[0]?.trade_id)
-console.log(profileTrades.data[0]?.realized_pnl)
+console.log(profileTrades.data[0]?.trade_id);
+console.log(profileTrades.data[0]?.realized_pnl);
 
 const realizedPnl = await info.profileRealizedPnl({
-  wallet: '0xe55b5e5e38f73c30aa367d310d6247f3f9a5e86e',
-})
+  wallet: "0xe55b5e5e38f73c30aa367d310d6247f3f9a5e86e",
+});
 
-console.log(realizedPnl.data[0]?.symbol)
-console.log(realizedPnl.data[0]?.realized_pnl)
+console.log(realizedPnl.data[0]?.symbol);
+console.log(realizedPnl.data[0]?.realized_pnl);
 ```
 
 ### Orders
 
 ```ts
 const orders = await info.orders({
-  wallet: '0xe55b5e5e38f73c30aa367d310d6247f3f9a5e86e',
+  wallet: "0xe55b5e5e38f73c30aa367d310d6247f3f9a5e86e",
   limit: 25,
-})
+});
 
-console.log(orders.data[0]?.order_id)
-console.log(orders.pagination.count)
+console.log(orders.data[0]?.order_id);
+console.log(orders.pagination.count);
 ```
 
 ### Fills
 
 ```ts
 const fills = await info.fills({
-  wallet: '0xe55b5e5e38f73c30aa367d310d6247f3f9a5e86e',
+  wallet: "0xe55b5e5e38f73c30aa367d310d6247f3f9a5e86e",
   limit: 25,
-})
+});
 
-console.log(fills.data[0]?.fill_id)
-console.log(fills.data[0]?.side)
+console.log(fills.data[0]?.fill_id);
+console.log(fills.data[0]?.side);
 ```
 
 ### Public Trades
 
 ```ts
 const trades = await info.trades({
-  underlying: 'BTC',
+  underlying: "BTC",
   limit: 25,
   offset: 0,
-})
+});
 
-console.log(trades.data[0]?.trade_id)
-console.log(trades.data[0]?.price)
+console.log(trades.data[0]?.trade_id);
+console.log(trades.data[0]?.price);
 
 const accountTrades = await info.trades({
-  account: '0xe55b5e5e38f73c30aa367d310d6247f3f9a5e86e',
+  account: "0xe55b5e5e38f73c30aa367d310d6247f3f9a5e86e",
   limit: 25,
   offset: 0,
-})
+});
 
-console.log(accountTrades.data[0]?.maker_address)
-console.log(accountTrades.data[0]?.taker_address)
+console.log(accountTrades.data[0]?.maker_address);
+console.log(accountTrades.data[0]?.taker_address);
 ```
 
 ### Settlement Payouts and Authorized Agents
 
 ```ts
 const payouts = await info.settlementPayouts({
-  wallet: '0xe55b5e5e38f73c30aa367d310d6247f3f9a5e86e',
+  wallet: "0xe55b5e5e38f73c30aa367d310d6247f3f9a5e86e",
   limit: 25,
-})
+});
 
-console.log(payouts.data[0]?.symbol)
-console.log(payouts.pagination.count)
+console.log(payouts.data[0]?.symbol);
+console.log(payouts.pagination.count);
 
 const agents = await info.authorizedAgents({
-  wallet: '0xe55b5e5e38f73c30aa367d310d6247f3f9a5e86e',
-})
+  wallet: "0xe55b5e5e38f73c30aa367d310d6247f3f9a5e86e",
+});
 
-console.log(agents.agents[0])
+console.log(agents.agents[0]);
 ```
 
 ### Historical Theos
 
 ```ts
 const history = await info.historicalTheos({
-  instrumentName: 'SPCX-20261231-10-C',
-  interval: '1h',
+  instrumentName: "SPCX-20261231-10-C",
+  interval: "1h",
   limit: 48,
-})
+});
 
-console.log(history.data?.points[0]?.theoretical_price)
+console.log(history.data?.points[0]?.theoretical_price);
 
 const batch = await info.historicalTheosBatch({
-  instrumentNames: ['SPCX-20261231-10-C', 'SPCX-20261231-12-C'],
-  interval: '1h',
+  instrumentNames: ["SPCX-20261231-10-C", "SPCX-20261231-12-C"],
+  interval: "1h",
   limit: 48,
-})
+});
 
-console.log(batch.data?.['SPCX-20261231-10-C']?.points.length)
+console.log(batch.data?.["SPCX-20261231-10-C"]?.points.length);
 ```
 
 ### Historical PnL
 
 ```ts
 const pnl = await info.historicalPnl({
-  wallet: '0xe55b5e5e38f73c30aa367d310d6247f3f9a5e86e',
-  interval: '1h',
+  wallet: "0xe55b5e5e38f73c30aa367d310d6247f3f9a5e86e",
+  interval: "1h",
   limit: 24,
-})
+});
 
-console.log(pnl.data?.points[0]?.equity)
-console.log(pnl.data?.points[0]?.net_deposits)
+console.log(pnl.data?.points[0]?.equity);
+console.log(pnl.data?.points[0]?.net_deposits);
 ```
 
 ### Withdrawal Status
 
 ```ts
 const withdrawals = await info.withdrawalHistory({
-  wallet: '0xe55b5e5e38f73c30aa367d310d6247f3f9a5e86e',
+  wallet: "0xe55b5e5e38f73c30aa367d310d6247f3f9a5e86e",
   limit: 5,
-})
+});
 
-const latest = withdrawals.withdrawals[0]
+const latest = withdrawals.withdrawals[0];
 
 if (latest) {
   const status = await info.directiveStatus({
     directiveId: latest.directive_id,
-  })
+  });
 
-  console.log(status.delivery_status)
-  console.log(status.tx_hash)
+  console.log(status.delivery_status);
+  console.log(status.tx_hash);
 }
 ```
 
@@ -467,86 +460,82 @@ if (latest) {
 
 ```ts
 const rfq = await info.rfqStatus({
-  rfqId: '00000000-0000-0000-0000-000000000000',
-})
+  rfqId: "00000000-0000-0000-0000-000000000000",
+});
 
-console.log(rfq.status)
-console.log(rfq.quotes[0]?.quote_id)
+console.log(rfq.status);
+console.log(rfq.quotes[0]?.quote_id);
 ```
 
 ### Liquidations
 
 ```ts
 const status = await info.liquidationStatus({
-  wallet: '0xe55b5e5e38f73c30aa367d310d6247f3f9a5e86e',
-})
+  wallet: "0xe55b5e5e38f73c30aa367d310d6247f3f9a5e86e",
+});
 
-console.log(status.data?.state)
-console.log(status.data?.shortfall)
+console.log(status.data?.state);
+console.log(status.data?.shortfall);
 
 const history = await info.liquidationHistory({
-  wallet: '0xe55b5e5e38f73c30aa367d310d6247f3f9a5e86e',
+  wallet: "0xe55b5e5e38f73c30aa367d310d6247f3f9a5e86e",
   limit: 20,
   offset: 0,
-})
+});
 
-console.log(history.data[0]?.new_state)
+console.log(history.data[0]?.new_state);
 
 const publicLiquidations = await info.liquidations({
   limit: 50,
-  status: 'in_liquidation',
-  marginMode: 'standard',
-  liquidationMode: 'full',
-})
+  status: "in_liquidation",
+  marginMode: "standard",
+  liquidationMode: "full",
+});
 
-console.log(publicLiquidations.data[0]?.auction_id)
+console.log(publicLiquidations.data[0]?.auction_id);
 ```
 
 ## Low-Level Method Imports
 
-Low-level methods are available from `@hypercall/sdk/api/info` for direct,
-tree-shakeable access.
+Low-level methods are available from `@hypercall/sdk/api/info` for direct, tree-shakeable access.
 
 ```ts
-import { HttpTransport } from '@hypercall/sdk'
-import { markets } from '@hypercall/sdk/api/info'
+import { HttpTransport } from "@hypercall/sdk";
+import { markets } from "@hypercall/sdk/api/info";
 
-const transport = new HttpTransport({ apiUrl: 'https://api.hypercall.xyz' })
+const transport = new HttpTransport({ apiUrl: "https://api.hypercall.xyz" });
 
 const response = await markets(
   { transport },
   { include_instruments: false },
-)
+);
 
-console.log(response.data[0]?.underlying)
+console.log(response.data[0]?.underlying);
 ```
 
 ## Response Envelopes
 
-Different Hypercall endpoints return different envelope shapes. Keep the
-envelope when typing app code instead of assuming every endpoint returns a raw
-array.
+Different Hypercall endpoints return different envelope shapes. Keep the envelope when typing app code instead of
+assuming every endpoint returns a raw array.
 
-- **REST list envelopes:** `markets`, `orders`, `fills`, `trades`,
-  `profileTrades`, `settlementPayouts`, `liquidationHistory`, and
-  `liquidations` return `{ success, data }`. `orders`, `fills`, `trades`,
-  `profileTrades`, `settlementPayouts`, and `liquidationHistory` also include
-  `pagination`. `liquidations` includes cursor pagination in `page`.
-- **JSON-RPC envelopes:** `instruments`, `optionSummaries`, and `orderbook`
-  return `{ jsonrpc, result, error, testnet, usDiff, usIn, usOut }`.
-- **API success envelope:** `portfolio`, `profile`, `historicalTheos`,
-  `historicalTheosBatch`, `historicalPnl`, and `liquidationStatus` return
-  `{ success, data, error }`.
-- **Authorized agents and withdrawals:** `authorizedAgents` returns `{ agents }`;
-  `withdrawalHistory` returns `{ withdrawals }`.
-- **Direct objects:** `exchangeInfo`, `directiveStatus`, and `rfqStatus` return
-  their response objects directly.
+- **REST list envelopes:** `markets`, `orders`, `fills`, `trades`, `profileTrades`, `settlementPayouts`,
+  `liquidationHistory`, and `liquidations` return `{ success, data }`. `orders`, `fills`, `trades`, `profileTrades`,
+  `settlementPayouts`, and `liquidationHistory` also include `pagination`. `liquidations` includes cursor pagination in
+  `page`.
+- **JSON-RPC envelopes:** `instruments`, `optionSummaries`, and `orderbook` return
+  `{ jsonrpc, result, error, testnet, usDiff, usIn, usOut }`.
+- **API success envelope:** `portfolio`, `profile`, `historicalTheos`, `historicalTheosBatch`, `historicalPnl`, and
+  `liquidationStatus` return `{ success, data, error }`.
+- **Authorized agents and withdrawals:** `authorizedAgents` returns `{ agents }`; `withdrawalHistory` returns
+  `{ withdrawals }`.
+- **Direct objects:** `exchangeInfo`, `directiveStatus`, and `rfqStatus` return their response objects directly.
 
 Useful root-level types:
 
 ```ts
 import type {
   AuthorizedAgentsResponse,
+  DirectiveStatusResponse,
   ExchangeInfoResponse,
   Fill,
   FillsResponse,
@@ -560,12 +549,11 @@ import type {
   HistoricalTheosResponse,
   Instrument,
   InstrumentsResponse,
-  DirectiveStatusResponse,
   LiquidationHistoryEntry,
   LiquidationHistoryResponse,
+  LiquidationsResponse,
   LiquidationStatusData,
   LiquidationStatusResponse,
-  LiquidationsResponse,
   Market,
   MarketInstrument,
   MarketSlim,
@@ -574,8 +562,8 @@ import type {
   OptionSummariesResponse,
   OptionSummary,
   Order,
-  OrderbookResponse,
   OrderBook,
+  OrderbookResponse,
   Portfolio,
   PortfolioResponse,
   ProfileData,
@@ -591,57 +579,57 @@ import type {
   Trade,
   TradesResponse,
   WithdrawalHistoryResponse,
-} from '@hypercall/sdk'
+} from "@hypercall/sdk";
 ```
 
 ## Endpoint Reference
 
-| Client method | Params | Response type |
-| --- | --- | --- |
-| `info.exchangeInfo()` | none | `ExchangeInfoResponse` |
-| `info.markets()` | `{ include_instruments?: true }` | `MarketsResponse` |
-| `info.markets({ include_instruments: false })` | `{ include_instruments: false }` | `MarketsSlimResponse` |
-| `info.instruments(params)` | `{ currency, kind? }` | `InstrumentsResponse` |
-| `info.optionSummaries(params)` | `{ currency, kind?, expiry? }` | `OptionSummariesResponse` |
-| `info.orderbook(params)` | `{ instrumentId, depth? }` | `OrderbookResponse` |
-| `info.portfolio(params)` | `{ wallet }` | `PortfolioResponse` |
-| `info.profile(params)` | `{ wallet }` | `ProfileResponse` |
-| `info.profileTrades(params)` | `{ wallet, limit?, offset?, competition_id?, from_ts_ms?, to_ts_ms?, symbol? }` | `ProfileTradesResponse` |
-| `info.profileRealizedPnl(params)` | `{ wallet, competition_id? }` | `RealizedPnlResponse` |
-| `info.orders(params)` | `{ wallet, limit?, offset?, status? }` | `OrdersResponse` |
-| `info.fills(params)` | `{ wallet, limit?, offset? }` | `FillsResponse` |
-| `info.trades(params)` | `{ limit?, offset? }`, `{ symbol, limit? }`, `{ underlying, limit?, offset? }`, or `{ account, limit?, offset? }` | `TradesResponse` |
-| `info.settlementPayouts(params)` | `{ wallet, limit?, offset?, symbol?, ledgerApplied? }` | `SettlementPayoutsResponse` |
-| `info.authorizedAgents(params)` | `{ wallet }` | `AuthorizedAgentsResponse` |
-| `info.directiveStatus(params)` | `{ directiveId }` | `DirectiveStatusResponse` |
-| `info.withdrawalHistory(params)` | `{ wallet, limit? }` | `WithdrawalHistoryResponse` |
-| `info.rfqStatus(params)` | `{ rfqId }` | `RfqStatusResponse` |
-| `info.historicalTheos(params)` | `{ instrumentName, interval, limit? }` | `HistoricalTheosResponse` |
-| `info.historicalTheosBatch(params)` | `{ instrumentNames, interval, limit? }` | `HistoricalTheosBatchResponse` |
-| `info.historicalPnl(params)` | `{ wallet, interval, limit?, includeAttribution? }` | `HistoricalPnlResponse` |
-| `info.liquidationStatus(params)` | `{ wallet }` | `LiquidationStatusResponse` |
-| `info.liquidationHistory(params)` | `{ wallet, limit?, offset? }` | `LiquidationHistoryResponse` |
-| `info.liquidations(params)` | `{ cursor?, limit?, wallet?, status?, state?, marginMode?, liquidationMode? }` | `LiquidationsResponse` |
+| Client method                                  | Params                                                                                                            | Response type                  |
+| ---------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- | ------------------------------ |
+| `info.exchangeInfo()`                          | none                                                                                                              | `ExchangeInfoResponse`         |
+| `info.markets()`                               | `{ include_instruments?: true }`                                                                                  | `MarketsResponse`              |
+| `info.markets({ include_instruments: false })` | `{ include_instruments: false }`                                                                                  | `MarketsSlimResponse`          |
+| `info.instruments(params)`                     | `{ currency, kind? }`                                                                                             | `InstrumentsResponse`          |
+| `info.optionSummaries(params)`                 | `{ currency, kind?, expiry? }`                                                                                    | `OptionSummariesResponse`      |
+| `info.orderbook(params)`                       | `{ instrumentId, depth? }`                                                                                        | `OrderbookResponse`            |
+| `info.portfolio(params)`                       | `{ wallet }`                                                                                                      | `PortfolioResponse`            |
+| `info.profile(params)`                         | `{ wallet }`                                                                                                      | `ProfileResponse`              |
+| `info.profileTrades(params)`                   | `{ wallet, limit?, offset?, competition_id?, from_ts_ms?, to_ts_ms?, symbol? }`                                   | `ProfileTradesResponse`        |
+| `info.profileRealizedPnl(params)`              | `{ wallet, competition_id? }`                                                                                     | `RealizedPnlResponse`          |
+| `info.orders(params)`                          | `{ wallet, limit?, offset?, status? }`                                                                            | `OrdersResponse`               |
+| `info.fills(params)`                           | `{ wallet, limit?, offset? }`                                                                                     | `FillsResponse`                |
+| `info.trades(params)`                          | `{ limit?, offset? }`, `{ symbol, limit? }`, `{ underlying, limit?, offset? }`, or `{ account, limit?, offset? }` | `TradesResponse`               |
+| `info.settlementPayouts(params)`               | `{ wallet, limit?, offset?, symbol?, ledgerApplied? }`                                                            | `SettlementPayoutsResponse`    |
+| `info.authorizedAgents(params)`                | `{ wallet }`                                                                                                      | `AuthorizedAgentsResponse`     |
+| `info.directiveStatus(params)`                 | `{ directiveId }`                                                                                                 | `DirectiveStatusResponse`      |
+| `info.withdrawalHistory(params)`               | `{ wallet, limit? }`                                                                                              | `WithdrawalHistoryResponse`    |
+| `info.rfqStatus(params)`                       | `{ rfqId }`                                                                                                       | `RfqStatusResponse`            |
+| `info.historicalTheos(params)`                 | `{ instrumentName, interval, limit? }`                                                                            | `HistoricalTheosResponse`      |
+| `info.historicalTheosBatch(params)`            | `{ instrumentNames, interval, limit? }`                                                                           | `HistoricalTheosBatchResponse` |
+| `info.historicalPnl(params)`                   | `{ wallet, interval, limit?, includeAttribution? }`                                                               | `HistoricalPnlResponse`        |
+| `info.liquidationStatus(params)`               | `{ wallet }`                                                                                                      | `LiquidationStatusResponse`    |
+| `info.liquidationHistory(params)`              | `{ wallet, limit?, offset? }`                                                                                     | `LiquidationHistoryResponse`   |
+| `info.liquidations(params)`                    | `{ cursor?, limit?, wallet?, status?, state?, marginMode?, liquidationMode? }`                                    | `LiquidationsResponse`         |
 
 Hypercall API docs: https://docs.hypercall.xyz/docs/trading/over-api/
 
 ## Local Development
 
 ```bash
-corepack pnpm install
-corepack pnpm typecheck
-corepack pnpm test
-corepack pnpm example examples/read-markets.ts
-corepack pnpm dev
+deno task check
+deno task test
+deno task example examples/read-markets.ts
+deno task pack:npm
 ```
+
+If Deno is not installed globally, prefix those commands with `npx -y`, for example `npx -y deno task test`.
 
 The source layout follows the current `@nktkas/hyperliquid` repository style:
 
 - `deno.json` exports source `.ts` entrypoints.
 - Source files import other source files with `.ts` extensions.
 - Domain clients live under `src/api/<domain>/client.ts`.
-- Low-level methods live under `src/api/<domain>/_methods/`, matching the
-  `@nktkas/hyperliquid` package shape.
+- Low-level methods live under `src/api/<domain>/_methods/`, matching the `@nktkas/hyperliquid` package shape.
 
-For local Next.js usage, `package.json` builds `dist/` with JavaScript
-imports rewritten from `.ts` to `.js`.
+The repository root intentionally does not keep a `package.json`. npm package metadata is generated into
+`dist/package.json` by `deno task build:npm`, and `dist/` is only the local npm publish staging directory.

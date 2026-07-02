@@ -8,20 +8,26 @@
  * @module
  */
 
-export type { ExchangeConfig, ExchangeRequestOptions } from './_methods/_base/mod.ts'
-export type { OrderRoute, OrderSide, OrderUpdateInfo, OrderUpdateMessage, TimeInForce } from './_methods/_base/order.ts'
+export type { ExchangeConfig, ExchangeRequestOptions } from "./_methods/_base/mod.ts";
+export type {
+  OrderRoute,
+  OrderSide,
+  OrderUpdateInfo,
+  OrderUpdateMessage,
+  TimeInForce,
+} from "./_methods/_base/order.ts";
 
-export * from './_methods/acceptRfqQuote.ts'
-export * from './_methods/approveAgent.ts'
-export * from './_methods/bulkCancelOrders.ts'
-export * from './_methods/bulkCancelOrdersByClientId.ts'
-export * from './_methods/cancelOrder.ts'
-export * from './_methods/cancelOrderByClientId.ts'
-export * from './_methods/placeOrder.ts'
-export * from './_methods/replaceOrder.ts'
-export * from './_methods/revokeAgent.ts'
-export * from './_methods/setMarginMode.ts'
-export * from './_methods/setSettlementPayoutsSeen.ts'
-export * from './_methods/submitStandardMarginLiquidation.ts'
-export * from './_methods/submitRfq.ts'
-export * from './_methods/withdrawUsdc.ts'
+export * from "./_methods/acceptRfqQuote.ts";
+export * from "./_methods/approveAgent.ts";
+export * from "./_methods/bulkCancelOrders.ts";
+export * from "./_methods/bulkCancelOrdersByClientId.ts";
+export * from "./_methods/cancelOrder.ts";
+export * from "./_methods/cancelOrderByClientId.ts";
+export * from "./_methods/placeOrder.ts";
+export * from "./_methods/replaceOrder.ts";
+export * from "./_methods/revokeAgent.ts";
+export * from "./_methods/setMarginMode.ts";
+export * from "./_methods/setSettlementPayoutsSeen.ts";
+export * from "./_methods/submitStandardMarginLiquidation.ts";
+export * from "./_methods/submitRfq.ts";
+export * from "./_methods/withdrawUsdc.ts";

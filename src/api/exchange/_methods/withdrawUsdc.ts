@@ -1,7 +1,7 @@
-import * as v from '@valibot/valibot'
+import * as v from "@valibot/valibot";
 
-import { NonEmptyString, NonNegativeInteger, parse, WalletAddress } from '../../_base.ts'
-import { buildSignedBody, type ExchangeConfig, type ExchangeRequestOptions } from './_base/mod.ts'
+import { NonEmptyString, NonNegativeInteger, parse, WalletAddress } from "../../_base.ts";
+import { buildSignedBody, type ExchangeConfig, type ExchangeRequestOptions } from "./_base/mod.ts";
 
 // -------------------- Schemas --------------------
 
@@ -9,45 +9,45 @@ import { buildSignedBody, type ExchangeConfig, type ExchangeRequestOptions } fro
 export const WithdrawUsdcRequest = v.pipe(
   v.object({
     /** Owner wallet performing the withdrawal. */
-    wallet: v.pipe(WalletAddress, v.description('Owner wallet address.')),
+    wallet: v.pipe(WalletAddress, v.description("Owner wallet address.")),
     /** Hypercall account to debit. */
-    account: v.pipe(WalletAddress, v.description('Hypercall account address.')),
+    account: v.pipe(WalletAddress, v.description("Hypercall account address.")),
     /** Hyperliquid recipient wallet. */
-    destination: v.pipe(WalletAddress, v.description('Hyperliquid recipient wallet address.')),
+    destination: v.pipe(WalletAddress, v.description("Hyperliquid recipient wallet address.")),
     /** USDC amount as a decimal string. */
-    amount: v.pipe(NonEmptyString, v.description('USDC amount.')),
+    amount: v.pipe(NonEmptyString, v.description("USDC amount.")),
     /** Nonce used in the EIP-712 signature. */
-    nonce: v.pipe(NonNegativeInteger, v.description('Signature nonce.')),
+    nonce: v.pipe(NonNegativeInteger, v.description("Signature nonce.")),
     /** EIP-712 signature from the wallet owner. */
-    signature: v.pipe(NonEmptyString, v.description('EIP-712 signature.')),
+    signature: v.pipe(NonEmptyString, v.description("EIP-712 signature.")),
   }),
-  v.description('Owner-signed request to withdraw USDC from Hypercall to Hyperliquid.'),
-)
-export type WithdrawUsdcRequest = v.InferOutput<typeof WithdrawUsdcRequest>
+  v.description("Owner-signed request to withdraw USDC from Hypercall to Hyperliquid."),
+);
+export type WithdrawUsdcRequest = v.InferOutput<typeof WithdrawUsdcRequest>;
 
 /** Parameters for the {@linkcode withdrawUsdc} function. */
-export type WithdrawUsdcParameters = v.InferInput<typeof WithdrawUsdcRequest>
+export type WithdrawUsdcParameters = v.InferInput<typeof WithdrawUsdcRequest>;
 
 /** Response for submitting a Hypercall USDC withdrawal. */
 export type WithdrawUsdcResponse = {
   /** Whether the request succeeded. */
-  success: boolean
+  success: boolean;
   /** Idempotency request ID generated for the withdrawal. */
-  request_id: string
+  request_id: string;
   /** Directive ID used for withdrawal status tracking. */
-  directive_id: string
+  directive_id: string;
   /** Current directive domain status. */
-  domain_status: string
+  domain_status: string;
   /** Current directive delivery status. */
-  delivery_status: string
+  delivery_status: string;
   /** Remaining account balance after the accepted withdrawal. */
-  balance_after: string
+  balance_after: string;
   /** Human-readable status message. */
-  message: string
-}
+  message: string;
+};
 
 /** Request options for the {@linkcode withdrawUsdc} function. */
-export type WithdrawUsdcOptions = ExchangeRequestOptions
+export type WithdrawUsdcOptions = ExchangeRequestOptions;
 
 /**
  * Withdraw USDC from Hypercall to Hyperliquid using an owner-signed payload.
@@ -87,17 +87,17 @@ export function withdrawUsdc(
   params: WithdrawUsdcParameters,
   opts?: WithdrawUsdcOptions,
 ): Promise<WithdrawUsdcResponse> {
-  const request = parse(WithdrawUsdcRequest, params)
+  const request = parse(WithdrawUsdcRequest, params);
 
   return config.transport.request<WithdrawUsdcResponse>(
-    '/withdraw/usdc',
+    "/withdraw/usdc",
     {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'content-type': 'application/json',
+        "content-type": "application/json",
       },
       body: JSON.stringify(buildSignedBody(request)),
     },
     opts?.signal,
-  )
+  );
 }

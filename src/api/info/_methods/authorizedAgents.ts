@@ -1,8 +1,8 @@
-import * as v from '@valibot/valibot'
+import * as v from "@valibot/valibot";
 
-import { parse, WalletAddress } from '../../_base.ts'
-import type { Address } from './_base/_schemas.ts'
-import { toQuery, type InfoConfig } from './_base/mod.ts'
+import { parse, WalletAddress } from "../../_base.ts";
+import type { Address } from "./_base/_schemas.ts";
+import { type InfoConfig, toQuery } from "./_base/mod.ts";
 
 // -------------------- Schemas --------------------
 
@@ -10,20 +10,20 @@ import { toQuery, type InfoConfig } from './_base/mod.ts'
 export const AuthorizedAgentsRequest = v.pipe(
   v.object({
     /** Wallet address. */
-    wallet: v.pipe(WalletAddress, v.description('Wallet address.')),
+    wallet: v.pipe(WalletAddress, v.description("Wallet address.")),
   }),
-  v.description('Request authorized agents for a wallet.'),
-)
-export type AuthorizedAgentsRequest = v.InferOutput<typeof AuthorizedAgentsRequest>
+  v.description("Request authorized agents for a wallet."),
+);
+export type AuthorizedAgentsRequest = v.InferOutput<typeof AuthorizedAgentsRequest>;
 
 /** Request parameters for the {@linkcode authorizedAgents} function. */
-export type AuthorizedAgentsParameters = v.InferInput<typeof AuthorizedAgentsRequest>
+export type AuthorizedAgentsParameters = v.InferInput<typeof AuthorizedAgentsRequest>;
 
 /** Authorized agent wallet address response. */
 export type AuthorizedAgentsResponse = {
   /** Agent wallet addresses authorized by the owner wallet. */
-  agents: Address[]
-}
+  agents: Address[];
+};
 
 /**
  * Request authorized agents for a wallet.
@@ -55,8 +55,8 @@ export function authorizedAgents(
   params: AuthorizedAgentsParameters,
   signal?: AbortSignal,
 ): Promise<AuthorizedAgentsResponse> {
-  const request = parse(AuthorizedAgentsRequest, params)
-  const query = toQuery({ wallet: request.wallet.toLowerCase() })
+  const request = parse(AuthorizedAgentsRequest, params);
+  const query = toQuery({ wallet: request.wallet.toLowerCase() });
 
-  return config.transport.request<AuthorizedAgentsResponse>(`/authorized-agents?${query}`, {}, signal)
+  return config.transport.request<AuthorizedAgentsResponse>(`/authorized-agents?${query}`, {}, signal);
 }
