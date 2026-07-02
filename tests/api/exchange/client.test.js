@@ -527,6 +527,7 @@ describe('ExchangeClient', () => {
       size: '0.1',
       price: '100',
       tif: 'gtc',
+      route: 'best_execution',
       nonce: 456,
       signature: '0xsignature',
     })

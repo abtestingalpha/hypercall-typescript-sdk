@@ -21,9 +21,9 @@ export const PlaceOrderRequest = v.pipe(
     price: v.pipe(NonEmptyString, v.description('Order price.')),
     /** Time in force. */
     tif: v.pipe(TimeInForce, v.description('Time in force.')),
-    /** Optional order route preference. */
-    route: v.pipe(v.optional(OrderRoute), v.description('Route preference.')),
-    /** Optional client order ID. Empty string is accepted for legacy signatures. */
+    /** Order route preference included in the signed payload. */
+    route: v.pipe(OrderRoute, v.description('Route preference.')),
+    /** Optional client order ID. */
     client_id: v.pipe(v.optional(v.string()), v.description('Client order ID.')),
     /** Nonce used in the EIP-712 signature. */
     nonce: v.pipe(NonNegativeInteger, v.description('Signature nonce.')),
@@ -54,10 +54,7 @@ export type PlaceOrderOptions = ExchangeRequestOptions
  * Place an order using a pre-signed Hypercall EIP-712 payload.
  *
  * Signing: pre-signed EIP-712 `PlaceOrder` payload.
- * The legacy `buildPlaceOrderValue(...)` helper produces a no-route
- * PlaceOrder signature. Only send `route` when the signature was produced with
- * route-aware typed data, such as `buildPlaceOrderWithRouteValue(...)` from
- * `@hypercall/sdk/signing`.
+ * The request body `route` must match the route included in the signed payload.
  *
  * @param config General configuration for Exchange API requests.
  * @param params Pre-signed parameters specific to the API request.
@@ -81,6 +78,7 @@ export type PlaceOrderOptions = ExchangeRequestOptions
  *   size: "0.1",
  *   price: "100",
  *   tif: "gtc",
+ *   route: "best_execution",
  *   client_id: "client-123",
  *   nonce: 1,
  *   signature: "0x...",

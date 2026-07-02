@@ -52,31 +52,7 @@ export function buildTypedData<const TPrimaryType extends string, const TMessage
   } as const
 }
 
-/**
- * Legacy PlaceOrder typed-data fields used by the current frontend.
- *
- * This shape intentionally does not include `route`. Do not send `route` with
- * a signature produced from these fields.
- */
 export const PLACE_ORDER_TYPES = {
-  PlaceOrder: [
-    { name: 'wallet', type: 'address' },
-    { name: 'symbol', type: 'string' },
-    { name: 'side', type: 'string' },
-    { name: 'size', type: 'string' },
-    { name: 'price', type: 'string' },
-    { name: 'tif', type: 'string' },
-    { name: 'clientId', type: 'string' },
-    { name: 'nonce', type: 'uint64' },
-  ],
-} as const satisfies Record<string, readonly TypedField[]>
-
-/**
- * Route-aware PlaceOrder typed-data fields used by the current backend.
- *
- * Use this map only when the request body also sends the same `route` value.
- */
-export const PLACE_ORDER_WITH_ROUTE_TYPES = {
   PlaceOrder: [
     { name: 'wallet', type: 'address' },
     { name: 'symbol', type: 'string' },
@@ -288,39 +264,7 @@ export function buildSetSettlementPayoutSeenValue(params: {
   } as const
 }
 
-/**
- * Build the legacy no-route PlaceOrder typed-data message.
- *
- * Do not send `route` with a signature produced from this helper.
- */
 export function buildPlaceOrderValue(params: {
-  wallet: string
-  symbol: string
-  side: 'Buy' | 'Sell'
-  size: string
-  price: string
-  tif: 'gtc' | 'ioc' | 'fok'
-  clientId?: string
-  nonce: bigint | number
-}) {
-  return {
-    wallet: params.wallet.toLowerCase(),
-    symbol: params.symbol,
-    side: params.side,
-    size: params.size,
-    price: params.price,
-    tif: params.tif,
-    clientId: params.clientId ?? '',
-    nonce: BigInt(params.nonce),
-  } as const
-}
-
-/**
- * Build the route-aware PlaceOrder typed-data message.
- *
- * The returned `route` value must match the request body's `route`.
- */
-export function buildPlaceOrderWithRouteValue(params: {
   wallet: string
   symbol: string
   side: 'Buy' | 'Sell'
@@ -461,6 +405,7 @@ export const toOrderRequestPayload = (value: PlaceOrderValue) => ({
   price: value.price,
   size: value.size,
   tif: value.tif,
+  route: value.route,
   client_id: value.clientId,
   nonce: Number(value.nonce),
 })

@@ -96,10 +96,8 @@ Exchange methods mutate state and currently accept pre-signed request payloads.
 The SDK submits and validates the request shape, while the caller owns wallet
 connection, nonce selection, and EIP-712 signing.
 
-Place order note: `buildPlaceOrderValue(...)` matches the frontend legacy
-`PlaceOrder` signature, which does not include `route`. Do not send `route` with
-that signature. To send `route`, sign with `PLACE_ORDER_WITH_ROUTE_TYPES` and
-`buildPlaceOrderWithRouteValue(...)`.
+Place order note: `route` is part of the signed `PlaceOrder` payload and must
+match the `route` field sent to the API.
 
 ```ts
 import { ExchangeClient, HttpTransport } from '@hypercall/sdk'
@@ -136,6 +134,7 @@ const placed = await exchange.placeOrder({
   size: '0.1',
   price: '100',
   tif: 'gtc',
+  route: 'best_execution',
   client_id: 'client-123',
   nonce: 2,
   signature: '0x...',
@@ -203,12 +202,6 @@ write actions. Product-local profile, username, and notification helpers live
 in the Hypercall frontend instead of this package. Pass the chain id from your
 app environment.
 
-`PLACE_ORDER_TYPES` and `buildPlaceOrderValue(...)` intentionally produce the
-current frontend legacy no-route `PlaceOrder` payload. If a request includes
-`route`, the backend expects the signature to include `route` too. Use
-`PLACE_ORDER_WITH_ROUTE_TYPES` and `buildPlaceOrderWithRouteValue(...)` for that
-route-aware payload.
-
 ```ts
 import {
   APPROVE_AGENT_TYPES,
@@ -233,12 +226,12 @@ console.log(typedData.primaryType)
 
 ```ts
 import {
-  PLACE_ORDER_WITH_ROUTE_TYPES,
-  buildPlaceOrderWithRouteValue,
+  PLACE_ORDER_TYPES,
+  buildPlaceOrderValue,
   buildTypedData,
 } from '@hypercall/sdk/signing'
 
-const routeAwareOrder = buildPlaceOrderWithRouteValue({
+const order = buildPlaceOrderValue({
   wallet: '0x0000000000000000000000000000000000000000',
   symbol: 'BTC-30JUN26-100000-C',
   side: 'Buy',
@@ -250,14 +243,14 @@ const routeAwareOrder = buildPlaceOrderWithRouteValue({
   nonce: 2,
 })
 
-const routeAwareTypedData = buildTypedData({
+const orderTypedData = buildTypedData({
   chainId: 999,
   primaryType: 'PlaceOrder',
-  types: PLACE_ORDER_WITH_ROUTE_TYPES,
-  message: routeAwareOrder,
+  types: PLACE_ORDER_TYPES,
+  message: order,
 })
 
-console.log(routeAwareTypedData.message.route)
+console.log(orderTypedData.message.route)
 ```
 
 ### Exchange Metadata

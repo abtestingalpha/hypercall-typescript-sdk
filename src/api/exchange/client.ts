@@ -300,6 +300,7 @@ export class ExchangeClient<C extends ExchangeConfig = ExchangeConfig> {
    *   size: "0.1",
    *   price: "100",
    *   tif: "gtc",
+   *   route: "best_execution",
    *   client_id: "client-123",
    *   nonce: 1,
    *   signature: "0x...",

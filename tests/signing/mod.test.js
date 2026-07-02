@@ -12,7 +12,6 @@ import {
   HYPERCALL_DOMAIN_FIELDS,
   HYPERCALL_VERIFYING_CONTRACT,
   PLACE_ORDER_TYPES,
-  PLACE_ORDER_WITH_ROUTE_TYPES,
   REPLACE_ORDER_TYPES,
   REVOKE_AGENT_TYPES,
   SET_MARGIN_MODE_TYPES,
@@ -25,7 +24,6 @@ import {
   buildApproveAgentValue,
   buildCancelOrderByClientIdValue,
   buildCancelOrderValue,
-  buildPlaceOrderWithRouteValue,
   buildPlaceOrderValue,
   buildReplaceOrderValue,
   buildRevokeAgentValue,
@@ -129,16 +127,6 @@ describe('signing helpers', () => {
       { name: 'size', type: 'string' },
       { name: 'price', type: 'string' },
       { name: 'tif', type: 'string' },
-      { name: 'clientId', type: 'string' },
-      { name: 'nonce', type: 'uint64' },
-    ])
-    assert.deepEqual(PLACE_ORDER_WITH_ROUTE_TYPES.PlaceOrder, [
-      { name: 'wallet', type: 'address' },
-      { name: 'symbol', type: 'string' },
-      { name: 'side', type: 'string' },
-      { name: 'size', type: 'string' },
-      { name: 'price', type: 'string' },
-      { name: 'tif', type: 'string' },
       { name: 'route', type: 'string' },
       { name: 'clientId', type: 'string' },
       { name: 'nonce', type: 'uint64' },
@@ -226,24 +214,6 @@ describe('signing helpers', () => {
       nonce: 6n,
     })
     assert.deepEqual(buildPlaceOrderValue({
-      wallet: WALLET,
-      symbol: 'BTC-260626-100000-C',
-      side: 'Buy',
-      size: '1',
-      price: '2.5',
-      tif: 'gtc',
-      nonce: 7,
-    }), {
-      wallet: LOWER_WALLET,
-      symbol: 'BTC-260626-100000-C',
-      side: 'Buy',
-      size: '1',
-      price: '2.5',
-      tif: 'gtc',
-      clientId: '',
-      nonce: 7n,
-    })
-    assert.deepEqual(buildPlaceOrderWithRouteValue({
       wallet: WALLET,
       symbol: 'BTC-260626-100000-C',
       side: 'Buy',
@@ -498,31 +468,12 @@ describe('signing helpers', () => {
         signature: '0x33537bca4c96828d3ee1590770c166e5fd1089fc1aecd69bd36457a6e0e1e6843c242b2a5d460af9e3709f3319fc921f7d6a9dd87cc238269627c923728460c11b',
       },
       {
-        name: 'placeOrderLegacy',
+        name: 'placeOrder',
         typedData: buildTypedData({
           chainId: VECTOR_CHAIN_ID,
           primaryType: 'PlaceOrder',
           types: PLACE_ORDER_TYPES,
           message: buildPlaceOrderValue({
-            wallet: VECTOR_WALLET,
-            symbol: 'BTC-30JUN26-100000-C',
-            side: 'Buy',
-            size: '0.1',
-            price: '100',
-            tif: 'gtc',
-            clientId: 'client-123',
-            nonce: 103,
-          }),
-        }),
-        signature: '0xa2e10dac6d7434720cc847a0e523ad8b0eb7a0093804424f5688e647e3635a8f75a1c61d5e94c187880d6882b5b72470605fc13ca7470dc9d73fdfc6dd8663811c',
-      },
-      {
-        name: 'placeOrderWithRoute',
-        typedData: buildTypedData({
-          chainId: VECTOR_CHAIN_ID,
-          primaryType: 'PlaceOrder',
-          types: PLACE_ORDER_WITH_ROUTE_TYPES,
-          message: buildPlaceOrderWithRouteValue({
             wallet: VECTOR_WALLET,
             symbol: 'BTC-30JUN26-100000-C',
             side: 'Buy',

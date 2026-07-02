@@ -4,7 +4,6 @@ import {
   CANCEL_ORDER_BY_CLOID_TYPES,
   CANCEL_ORDER_TYPES,
   PLACE_ORDER_TYPES,
-  PLACE_ORDER_WITH_ROUTE_TYPES,
   REPLACE_ORDER_TYPES,
   REVOKE_AGENT_TYPES,
   SET_MARGIN_MODE_TYPES,
@@ -18,7 +17,6 @@ import {
   buildCancelOrderByClientIdValue,
   buildCancelOrderValue,
   buildPlaceOrderValue,
-  buildPlaceOrderWithRouteValue,
   buildReplaceOrderValue,
   buildRevokeAgentValue,
   buildSetMarginModeValue,
@@ -48,7 +46,7 @@ const revokeAgentTypedData = buildTypedData({
   message: buildRevokeAgentValue(agent, 2),
 })
 
-const legacyPlaceOrderTypedData = buildTypedData({
+const placeOrderTypedData = buildTypedData({
   chainId,
   primaryType: 'PlaceOrder',
   types: PLACE_ORDER_TYPES,
@@ -59,25 +57,9 @@ const legacyPlaceOrderTypedData = buildTypedData({
     size: '0.1',
     price: '100',
     tif: 'gtc',
+    route: 'book_only',
     clientId: 'client-123',
     nonce: 3,
-  }),
-})
-
-const routeAwarePlaceOrderTypedData = buildTypedData({
-  chainId,
-  primaryType: 'PlaceOrder',
-  types: PLACE_ORDER_WITH_ROUTE_TYPES,
-  message: buildPlaceOrderWithRouteValue({
-    wallet,
-    symbol: 'BTC-30JUN26-100000-C',
-    side: 'Buy',
-    size: '0.1',
-    price: '100',
-    tif: 'gtc',
-    route: 'book_only',
-    clientId: 'client-124',
-    nonce: 4,
   }),
 })
 
@@ -214,9 +196,8 @@ const withdrawUsdcTypedData = buildTypedData({
 console.log({
   approveAgent: approveAgentTypedData.primaryType,
   revokeAgent: revokeAgentTypedData.primaryType,
-  legacyPlaceOrderFields: legacyPlaceOrderTypedData.types.PlaceOrder.map((field) => field.name),
-  routeAwarePlaceOrderFields: routeAwarePlaceOrderTypedData.types.PlaceOrder.map((field) => field.name),
-  routeAwarePlaceOrderRoute: routeAwarePlaceOrderTypedData.message.route,
+  placeOrderFields: placeOrderTypedData.types.PlaceOrder.map((field) => field.name),
+  placeOrderRoute: placeOrderTypedData.message.route,
   replaceOrder: replaceOrderTypedData.primaryType,
   cancelOrder: cancelOrderTypedData.primaryType,
   cancelOrderByClientId: cancelOrderByClientIdTypedData.primaryType,
