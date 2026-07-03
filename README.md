@@ -50,8 +50,7 @@ const transport = new HttpTransport({ apiUrl: "https://api.hypercall.xyz" });
 
 ## Info API Examples
 
-The Info client follows the same call shape as `@nktkas/hyperliquid`: request params come first, and the optional
-`AbortSignal` comes last.
+Request params come first, and the optional `AbortSignal` comes last.
 
 Focused runnable examples live in `examples/`:
 
@@ -622,12 +621,12 @@ deno task pack:npm
 
 If Deno is not installed globally, prefix those commands with `npx -y`, for example `npx -y deno task test`.
 
-The source layout follows the current `@nktkas/hyperliquid` repository style:
+The source layout is Deno-first:
 
 - `deno.json` exports source `.ts` entrypoints.
 - Source files import other source files with `.ts` extensions.
 - Domain clients live under `src/api/<domain>/client.ts`.
-- Low-level methods live under `src/api/<domain>/_methods/`, matching the `@nktkas/hyperliquid` package shape.
+- Low-level methods live under `src/api/<domain>/_methods/`.
 
 The repository root intentionally does not keep a `package.json`. npm package metadata is generated into
 `dist/package.json` by `deno task build:npm`, and `dist/` is only the local npm publish staging directory.

@@ -3,7 +3,6 @@
 /**
  * Builds the Deno source package into an ESM-only npm package.
  *
- * This mirrors the @nktkas/hyperliquid publishing model:
  * - deno.json is the source manifest
  * - dist/ is only the npm publish staging directory
  * - runtime JS and declarations live under dist/esm/
