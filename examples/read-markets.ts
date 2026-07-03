@@ -17,7 +17,11 @@ const currency = firstMarket?.underlying ?? "SPCX";
 const instruments = await info.instruments({ currency });
 const firstInstrument: Instrument | undefined = instruments.result?.[0];
 
-const summaries = await info.optionSummaries({ currency });
+const summaries = await info.optionSummaries({
+  currency,
+  includeRfqProviderQuotes: true,
+  rfqProviderQuotesLimit: 5,
+});
 const firstSummary: OptionSummary | undefined = summaries.result?.[0];
 
 const book = firstInstrument
@@ -30,6 +34,7 @@ console.log({
   firstMarket: firstMarket?.underlying,
   firstInstrument: firstInstrument?.instrument_name,
   firstSummary: firstSummary?.instrument_name,
+  rfqProviderQuotes: firstSummary?.rfq_provider_quotes?.length ?? 0,
   bestBid: orderbook?.best_bid_price,
   bestAsk: orderbook?.best_ask_price,
 });

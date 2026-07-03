@@ -84,11 +84,16 @@ const info = new InfoClient({ transport });
 const controller = new AbortController();
 
 const summaries = await info.optionSummaries(
-  { currency: "SPCX" },
+  {
+    currency: "SPCX",
+    includeRfqProviderQuotes: true,
+    rfqProviderQuotesLimit: 5,
+  },
   controller.signal,
 );
 
 console.log(summaries.result?.[0]?.instrument_name);
+console.log(summaries.result?.[0]?.rfq_provider_quotes?.[0]?.wallet);
 ```
 
 ## Exchange API Examples
@@ -275,10 +280,15 @@ console.log(instruments.result?.[0]?.instrument_name);
 ### Option Summaries
 
 ```ts
-const summaries = await info.optionSummaries({ currency: "SPCX" });
+const summaries = await info.optionSummaries({
+  currency: "SPCX",
+  includeRfqProviderQuotes: true,
+  rfqProviderQuotesLimit: 5,
+});
 
 console.log(summaries.result?.[0]?.mark_price);
 console.log(summaries.result?.[0]?.greeks?.delta);
+console.log(summaries.result?.[0]?.rfq_provider_quotes?.length ?? 0);
 ```
 
 ### Orderbook
@@ -587,7 +597,7 @@ import type {
 | `info.markets()`                               | `{ include_instruments?: true }`                                                                                  | `MarketsResponse`              |
 | `info.markets({ include_instruments: false })` | `{ include_instruments: false }`                                                                                  | `MarketsSlimResponse`          |
 | `info.instruments(params)`                     | `{ currency, kind? }`                                                                                             | `InstrumentsResponse`          |
-| `info.optionSummaries(params)`                 | `{ currency, kind?, expiry? }`                                                                                    | `OptionSummariesResponse`      |
+| `info.optionSummaries(params)`                 | `{ currency, kind?, expiry?, includeRfqProviderQuotes?, rfqProviderQuotesLimit? }`                                | `OptionSummariesResponse`      |
 | `info.orderbook(params)`                       | `{ instrumentId, depth? }`                                                                                        | `OrderbookResponse`            |
 | `info.portfolio(params)`                       | `{ wallet }`                                                                                                      | `PortfolioResponse`            |
 | `info.profile(params)`                         | `{ wallet }`                                                                                                      | `ProfileResponse`              |

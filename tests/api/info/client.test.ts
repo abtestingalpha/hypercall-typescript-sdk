@@ -84,6 +84,16 @@ describe("InfoClient", () => {
       path: "/options-summary?currency=SPCX&kind=option&expiry=1782432000",
     },
     {
+      name: "optionSummaries with RFQ provider quotes",
+      call: (client, signal) =>
+        client.optionSummaries({
+          currency: "SPCX",
+          includeRfqProviderQuotes: true,
+          rfqProviderQuotesLimit: 5,
+        }, signal),
+      path: "/options-summary?currency=SPCX&kind=option&include_rfq_provider_quotes=true&rfq_provider_quotes_limit=5",
+    },
+    {
       name: "orderbook",
       call: (client, signal) => client.orderbook({ instrumentId: 123, depth: 20 }, signal),
       path: "/orderbook?instrument_id=123&depth=20",

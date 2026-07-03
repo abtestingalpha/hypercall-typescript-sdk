@@ -1,7 +1,7 @@
 import * as v from "@valibot/valibot";
 
 import { NonEmptyString, parse, PositiveInteger } from "../../_base.ts";
-import type { Address, Greeks, JsonRpcResponse } from "./_base/_schemas.ts";
+import type { Address, Decimal, Greeks, JsonRpcResponse } from "./_base/_schemas.ts";
 import { type InfoConfig, toQuery } from "./_base/mod.ts";
 
 // -------------------- Schemas --------------------
@@ -15,6 +15,16 @@ export const OptionSummariesRequest = v.pipe(
     kind: v.pipe(v.optional(NonEmptyString), v.description("Instrument kind.")),
     /** Optional expiry timestamp. */
     expiry: v.pipe(v.optional(PositiveInteger), v.description("Optional expiry timestamp.")),
+    /** Include raw RFQ quote-provider indicative quotes. */
+    includeRfqProviderQuotes: v.pipe(
+      v.optional(v.boolean()),
+      v.description("Include raw RFQ quote-provider indicative quotes."),
+    ),
+    /** Maximum RFQ provider quotes returned per instrument. */
+    rfqProviderQuotesLimit: v.pipe(
+      v.optional(PositiveInteger),
+      v.description("Maximum RFQ provider quotes returned per instrument."),
+    ),
   }),
   v.description("Request option summaries for a currency."),
 );
@@ -22,6 +32,22 @@ export type OptionSummariesRequest = v.InferOutput<typeof OptionSummariesRequest
 
 /** Request parameters for the {@linkcode optionSummaries} function. */
 export type OptionSummariesParameters = v.InferInput<typeof OptionSummariesRequest>;
+
+/** Raw quote-provider indicative quote behind an aggregate RFQ bid or ask. */
+export type RfqProviderIndicativeQuote = {
+  /** Quote-provider wallet address. */
+  wallet: Address;
+  /** Provider bid price. */
+  bid_price: Decimal;
+  /** Provider ask price. */
+  ask_price: Decimal;
+  /** Maximum size available at the bid. */
+  max_bid_size: Decimal;
+  /** Maximum size available at the ask. */
+  max_ask_size: Decimal;
+  /** Last update timestamp in milliseconds since epoch. */
+  updated_at: number;
+};
 
 /** Public option summary with prices, interest, volume, and Greeks. */
 export type OptionSummary = {
@@ -93,6 +119,8 @@ export type OptionSummary = {
   indicative_bid_size?: number | null;
   /** Indicative ask size, if available. */
   indicative_ask_size?: number | null;
+  /** Raw RFQ quote-provider indicative quotes, when requested. */
+  rfq_provider_quotes?: RfqProviderIndicativeQuote[] | null;
   /** Greeks used for the summary, if available. */
   greeks?: Partial<Greeks> | null;
   /** Raw Greeks, if returned by the API. */
@@ -137,6 +165,8 @@ export function optionSummaries(
     currency: request.currency,
     kind: request.kind ?? "option",
     expiry: request.expiry,
+    include_rfq_provider_quotes: request.includeRfqProviderQuotes,
+    rfq_provider_quotes_limit: request.rfqProviderQuotesLimit,
   });
 
   return config.transport.request<OptionSummariesResponse>(`/options-summary?${query}`, {}, signal);
