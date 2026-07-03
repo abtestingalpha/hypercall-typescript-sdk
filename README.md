@@ -1,7 +1,6 @@
 # Hypercall TypeScript SDK
 
-A TypeScript SDK for Hypercall API consumers, patterned after the current
-[`@nktkas/hyperliquid`](https://github.com/nktkas/hyperliquid) source layout.
+A TypeScript SDK for Hypercall API consumers.
 
 The package exposes:
 
@@ -17,18 +16,17 @@ The package exposes:
 pnpm add @hypercall/sdk
 ```
 
-For local usage before the package is published:
+For local tarball testing before the package is published:
 
 ```bash
-cd /Users/abtestingalpha/Desktop/hypercall-typescript-sdk
+cd hypercall-typescript-sdk
 deno task pack:npm
 
-cd /Users/abtestingalpha/Desktop/hypertheta/frontend
-corepack pnpm add /Users/abtestingalpha/Desktop/hypercall-typescript-sdk/dist/hypercall-sdk-0.0.0.tgz
+cd ../your-app
+pnpm add ../hypercall-typescript-sdk/dist/hypercall-sdk-*.tgz
 ```
 
-This installs the same package shape npm consumers receive. Avoid `link:` for publish validation because it reads
-directly from the source checkout.
+This installs the same package shape npm consumers receive.
 
 ## Quick Start
 
